@@ -13,6 +13,7 @@ from fpdf import FPDF
 import requests
 from PIL import Image
 import pycountry
+import json
 
 # =========================
 # PAGE CONFIG & STYLES
@@ -74,12 +75,6 @@ def get_month_options():
         d += relativedelta(months=1)
     return [m.strftime('%B %Y') for m in months]
 
-def get_previous_month_period(sel):
-    """Given the string 'March 2025', return the previous calendar month and year."""
-    dt = datetime.strptime(sel, '%B %Y').date()
-    prev_month = dt - relativedelta(months=1)
-    return prev_month.strftime('%B %Y')
-
 def get_month_range(sel):
     start = datetime.strptime(sel, '%B %Y').date().replace(day=1)
     end = start + relativedelta(months=1) - timedelta(days=1)
@@ -90,12 +85,10 @@ def get_month_range(sel):
 def format_month_year(d):
     return d.strftime('%B %Y')
 
-import json
-
 @st.cache_resource
 def get_credentials():
     sa = st.secrets['gcp']['service_account']
-    info = json.loads(sa)   # <-- this is the fix: convert JSON string to dict
+    info = json.loads(sa)   # Parse the JSON string
     pk = info.get('private_key', '').replace('\\n', '\n')
     if not pk.endswith('\n'):
         pk += '\n'
