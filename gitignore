@@ -1,0 +1,5 @@
+# Environment variables
+.env
+# in .gitignore
+.env
+.streamlit/secrets.toml
