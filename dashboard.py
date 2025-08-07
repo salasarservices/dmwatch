@@ -14,7 +14,6 @@ import requests
 from PIL import Image
 import pycountry
 
-
 # =========================
 # PAGE CONFIG & STYLES
 # =========================
@@ -75,11 +74,17 @@ def get_month_options():
         d += relativedelta(months=1)
     return [m.strftime('%B %Y') for m in months]
 
+def get_previous_month_period(sel):
+    """Given the string 'March 2025', return the previous calendar month and year."""
+    dt = datetime.strptime(sel, '%B %Y').date()
+    prev_month = dt - relativedelta(months=1)
+    return prev_month.strftime('%B %Y')
+
 def get_month_range(sel):
     start = datetime.strptime(sel, '%B %Y').date().replace(day=1)
     end = start + relativedelta(months=1) - timedelta(days=1)
     prev_end = start - timedelta(days=1)
-    prev_start = prev_end - (end - start)
+    prev_start = prev_end.replace(day=1)
     return start, end, prev_start, prev_end
 
 def format_month_year(d):
@@ -593,17 +598,6 @@ render_table(sc_df)
 # SOCIAL MEDIA ANALYTICS REPORTING DASHBOARD STARTS
 # =========================
 
-
-# =========================
-# FACEBOOK ANALYTICS
-# =========================
-
-# ... (all your previous imports and SEO dashboard code remain unchanged)
-
-# =========================
-# SOCIAL MEDIA ANALYTICS REPORTING DASHBOARD STARTS
-# =========================
-
 # =========================
 # FACEBOOK ANALYTICS
 # =========================
@@ -613,7 +607,14 @@ PAGE_ID = st.secrets["facebook"]["page_id"]
 ACCESS_TOKEN = st.secrets["facebook"]["access_token"]
 
 # --- Helpers ---
-def get_month_range(year, month):
+def get_fb_prev_month(year, month):
+    """Robust previous month calculation for Facebook metrics."""
+    if month == 1:
+        return year - 1, 12
+    else:
+        return year, month - 1
+
+def get_fb_month_range(year, month):
     start = date(year, month, 1)
     if month == 12:
         end = date(year + 1, 1, 1)
@@ -677,10 +678,10 @@ def get_delta_icon_and_color(val):
 # --- Data ---
 today = date.today()
 cy, cm = today.year, today.month
-py, pm = (cy, cm - 1) if cm > 1 else (cy - 1, 12)
+py, pm = get_fb_prev_month(cy, cm)
 
-cur_start, cur_end = get_month_range(cy, cm)
-prev_start, prev_end = get_month_range(py, pm)
+cur_start, cur_end = get_fb_month_range(cy, cm)
+prev_start, prev_end = get_fb_month_range(py, pm)
 
 cur_since, cur_until = cur_start.isoformat(), cur_end.isoformat()
 prev_since, prev_until = prev_start.isoformat(), prev_end.isoformat()
