@@ -90,10 +90,12 @@ def get_month_range(sel):
 def format_month_year(d):
     return d.strftime('%B %Y')
 
+import json
+
 @st.cache_resource
 def get_credentials():
     sa = st.secrets['gcp']['service_account']
-    info = dict(sa)
+    info = json.loads(sa)   # <-- this is the fix: convert JSON string to dict
     pk = info.get('private_key', '').replace('\\n', '\n')
     if not pk.endswith('\n'):
         pk += '\n'
