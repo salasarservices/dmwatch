@@ -2,4 +2,5 @@
 .env
 # in .gitignore
 .env
+service-account.json
 .streamlit/secrets.toml
