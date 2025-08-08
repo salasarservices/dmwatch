@@ -88,7 +88,13 @@ def format_month_year(d):
 @st.cache_resource
 def get_credentials():
     sa = st.secrets['gcp']['service_account']
-    info = json.loads(sa)   # Parse the JSON string
+    st.write("Raw service_account from TOML (repr):", repr(sa))  # <--- Debug line
+    try:
+        info = json.loads(sa)
+        st.write("Parsed JSON keys:", list(info.keys()))          # <--- Debug line
+    except Exception as e:
+        st.error(f"JSON decode error: {e}")
+        st.stop()
     pk = info.get('private_key', '').replace('\\n', '\n')
     if not pk.endswith('\n'):
         pk += '\n'
