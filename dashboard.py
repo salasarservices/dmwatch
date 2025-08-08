@@ -84,16 +84,11 @@ def get_month_range(sel):
 
 def format_month_year(d):
     return d.strftime('%B %Y')
+
 @st.cache_resource
 def get_credentials():
     sa = st.secrets['gcp']['service_account']
-    # st.write("Raw service_account from TOML (repr):", repr(sa))  # <-- Removed
-    try:
-        info = json.loads(sa)
-        # st.write("Parsed JSON keys:", list(info.keys()))          # <-- Removed
-    except Exception as e:
-        st.error(f"JSON decode error: {e}")
-        st.stop()
+    info = json.loads(sa)   # Parse the JSON string
     pk = info.get('private_key', '').replace('\\n', '\n')
     if not pk.endswith('\n'):
         pk += '\n'
@@ -180,6 +175,24 @@ def get_gsc_site_stats(site, sd, ed):
         st.error(f"Error fetching GSC site stats: {e}")
         return 0, 0, 0.0
 
+# NEW: Fetch new and returning users
+@st.cache_data(ttl=3600)
+def get_new_returning_users(pid, sd, ed):
+    try:
+        req = {
+            'property': f'properties/{pid}',
+            'date_ranges': [{'start_date': sd.strftime('%Y-%m-%d'), 'end_date': ed.strftime('%Y-%m-%d')}],
+            'metrics': [{'name': 'totalUsers'}, {'name': 'newUsers'}]
+        }
+        resp = ga4.run_report(request=req)
+        total_users = int(resp.rows[0].metric_values[0].value)
+        new_users = int(resp.rows[0].metric_values[1].value)
+        returning_users = total_users - new_users
+        return total_users, new_users, returning_users
+    except Exception as e:
+        st.error(f"Error fetching new/returning users: {e}")
+        return 0, 0, 0
+
 def render_table(df):
     if df.empty:
         st.warning("No data available for this period.")
@@ -218,10 +231,8 @@ with st.sidebar:
     st.image("https://www.salasarservices.com/assets/Frontend/images/logo-black.png", width=170)
     st.title('Report Filters')
     month_options = get_month_options()
-    # Default to current month on first load or refresh
     if "selected_month" not in st.session_state:
         st.session_state["selected_month"] = month_options[-1]
-    # Selectbox for month selection
     sel = st.selectbox('Select report month:', month_options, index=month_options.index(st.session_state["selected_month"]))
     if sel != st.session_state["selected_month"]:
         st.session_state["selected_month"] = sel
@@ -240,7 +251,6 @@ with st.sidebar:
     if st.button("Refresh Data (Clear Cache)"):
         st.cache_data.clear()
         st.cache_resource.clear()
-        # After refresh, always select current month
         st.session_state["selected_month"] = month_options[-1]
         st.session_state["refresh"] = True
 
@@ -328,13 +338,37 @@ country_data = get_active_users_by_country(PROPERTY_ID, sd, ed)
 traf_df = pd.DataFrame(traf).head(5)
 sc_df = pd.DataFrame([{'page': r['keys'][0], 'query': r['keys'][1], 'clicks': r.get('clicks', 0)} for r in sc_data]).head(10)
 
+# NEW: New vs Returning Users (data collection)
+total_users, new_users, returning_users = get_new_returning_users(PROPERTY_ID, sd, ed)
+total_users_prev, new_users_prev, returning_users_prev = get_new_returning_users(PROPERTY_ID, psd, ped)
+delta_new = pct_change(new_users, new_users_prev)
+delta_returning = pct_change(returning_users, returning_users_prev)
+
+returning_new_users_circles = [
+    {
+        "title": "New Users",
+        "value": new_users,
+        "delta": delta_new,
+        "color": "#e67e22",
+    },
+    {
+        "title": "Returning Users",
+        "value": returning_users,
+        "delta": delta_returning,
+        "color": "#3498db",
+    }
+]
+returning_new_tooltips = [
+    "Number of users who visited your website for the first time during the period.",
+    "Number of users who returned to your website (not their first visit) during the period.",
+]
+
 # =========================
 # PDF GENERATION LOGIC (CORRECTED)
 # =========================
 def generate_pdf_report():
     pdf = FPDF()
     pdf.add_page()
-    # --- Logo at top ---
     logo_url = "https://www.salasarservices.com/assets/Frontend/images/logo-black.png"
     try:
         logo_bytes = requests.get(logo_url, timeout=5).content
@@ -343,9 +377,8 @@ def generate_pdf_report():
         logo_img.save(logo_path)
         pdf.image(logo_path, x=10, y=8, w=50)
     except Exception:
-        pass  # fallback: no logo
+        pass
 
-    # --- Title ---
     pdf.set_xy(65, 15)
     pdf.set_font("Arial", 'B', 17)
     pdf.set_text_color(45, 68, 141)
@@ -356,7 +389,6 @@ def generate_pdf_report():
     pdf.ln(8)
     pdf.cell(0, 10, f"Reporting Period: {format_month_year(sd)} | Previous: {format_month_year(psd)}", ln=1)
 
-    # --- Website Performance ---
     pdf.set_font("Arial", 'B', 14)
     pdf.set_text_color(45, 68, 141)
     pdf.cell(0, 12, "Website Performance", ln=1)
@@ -367,7 +399,6 @@ def generate_pdf_report():
         pdf.cell(0, 10, f"{metric['title']}: {val} ({metric['delta']:+.2f} % from previous month)", ln=1)
     pdf.ln(2)
 
-    # --- Top Content ---
     pdf.set_font("Arial", 'B', 14)
     pdf.set_text_color(45, 68, 141)
     pdf.cell(0, 10, "Top Content", ln=1)
@@ -382,18 +413,23 @@ def generate_pdf_report():
         pdf.cell(35, 8, row['Change (%)'], border=1, ln=1)
     pdf.ln(4)
 
-    # --- Website Analytics ---
     pdf.set_font("Arial", 'B', 14)
     pdf.set_text_color(45, 68, 141)
     pdf.cell(0, 10, "Website Analytics", ln=1)
-
     pdf.set_font("Arial", '', 12)
     pdf.cell(60, 8, f"Total Users: {cur} ({delta:+.2f}%)", ln=1)
     pdf.cell(60, 8, f"Sessions: {total} ({delta2:+.2f}%)", ln=1)
     pdf.cell(60, 8, f"Organic Clicks: {clicks} ({delta3:+.2f}%)", ln=1)
     pdf.ln(1)
 
-    # --- Active Users by Country ---
+    # New vs Returning Users for PDF
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 9, "New vs Returning Users", ln=1)
+    pdf.set_font("Arial", '', 12)
+    pdf.cell(60, 8, f"New Users: {new_users} ({delta_new:+.2f}%)", ln=1)
+    pdf.cell(60, 8, f"Returning Users: {returning_users} ({delta_returning:+.2f}%)", ln=1)
+    pdf.ln(1)
+
     pdf.set_font("Arial", 'B', 12)
     pdf.cell(0, 9, "Active Users by Country (Top 5)", ln=1)
     pdf.set_font("Arial", '', 12)
@@ -401,7 +437,6 @@ def generate_pdf_report():
         pdf.cell(0, 7, f"{c['country']}: {c['activeUsers']}", ln=1)
     pdf.ln(1)
 
-    # --- Traffic Acquisition by Channel ---
     pdf.set_font("Arial", 'B', 12)
     pdf.cell(0, 9, "Traffic Acquisition by Channel", ln=1)
     pdf.set_font("Arial", '', 12)
@@ -409,7 +444,6 @@ def generate_pdf_report():
         pdf.cell(0, 7, f"{row['channel']}: {row['sessions']}", ln=1)
     pdf.ln(1)
 
-    # --- Top 10 Organic Queries ---
     pdf.set_font("Arial", 'B', 12)
     pdf.cell(0, 9, "Top 10 Organic Queries", ln=1)
     pdf.set_font("Arial", '', 12)
@@ -417,13 +451,10 @@ def generate_pdf_report():
         pdf.cell(0, 7, f"{row['query']} ({row['clicks']} clicks)", ln=1)
     pdf.ln(2)
 
-    # --- Footer ---
     pdf.set_y(-25)
     pdf.set_font("Arial", 'I', 8)
     pdf.set_text_color(150,150,150)
     pdf.cell(0, 10, "Generated by Salasar Services Digital Marketing Reporting Dashboard", 0, 0, 'C')
-
-    # Corrected PDF export for Streamlit
     pdf_bytes = pdf.output(dest='S').encode('latin1')
     return io.BytesIO(pdf_bytes)
 
@@ -441,7 +472,7 @@ if pdf_report_btn:
 # =========================
 st.markdown('<div class="section-header">Website Performance</div>', unsafe_allow_html=True)
 cols_perf = st.columns(3)
-animation_duration = 0.5  # Fast animation
+animation_duration = 0.5
 perf_tooltips = [
     "The total number of times users clicked your website's listing in Google Search results during the selected period.",
     "The total number of times your website appeared in Google Search results (regardless of clicks) for any query.",
@@ -490,6 +521,50 @@ for i, col in enumerate(cols_perf):
         )
         st.markdown(
             f"<div style='text-align:center; font-size:18px; margin-top:0.2em; color:{pct_color}; font-weight:500'>{pct_delta_text}</div>",
+            unsafe_allow_html=True
+        )
+
+# =========================
+# NEW VS RETURNING USERS SECTION
+# =========================
+st.markdown('<div class="section-header">New vs Returning Users</div>', unsafe_allow_html=True)
+cols_ret = st.columns(2)
+animation_duration = 0.5
+for i, col in enumerate(cols_ret):
+    entry = returning_new_users_circles[i]
+    with col:
+        st.markdown(
+            f"""<div style='text-align:center; font-weight:500; font-size:22px; margin-bottom:0.2em'>
+                {entry["title"]}
+                <span class='tooltip'>
+                  <span class='questionmark'>?</span>
+                  <span class='tooltiptext'>{returning_new_tooltips[i]}</span>
+                </span>
+            </div>""",
+            unsafe_allow_html=True
+        )
+        placeholder = st.empty()
+        steps = 45
+        for n in range(steps + 1):
+            display_val = int(entry["value"] * n / steps)
+            placeholder.markdown(
+                f"""
+                <div style='margin:0 auto; display:flex; align-items:center; justify-content:center; height:110px;'>
+                  <div class='animated-circle' style='background:{entry["color"]};'>
+                    <span class='animated-circle-value'>{display_val}</span>
+                  </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            time.sleep(animation_duration / steps)
+        pct_color = "#2ecc40" if entry["delta"] >= 0 else "#ff4136"
+        pct_icon = "↑" if entry["delta"] >= 0 else "↓"
+        pct_icon_colored = (
+            f"<span style='color:{pct_color}; font-size:1.05em; vertical-align:middle;'>{pct_icon}</span>"
+        )
+        st.markdown(
+            f"<div style='text-align:center; font-size:18px; margin-top:0.2em; color:{pct_color}; font-weight:500'>{pct_icon_colored} <span class='animated-circle-value' style='color:{pct_color}; font-size:1.1em;'>{abs(entry['delta']):.2f}%</span> <span class='animated-circle-delta-note'>(From Previous Month)</span></div>",
             unsafe_allow_html=True
         )
 
@@ -602,13 +677,10 @@ render_table(sc_df)
 # FACEBOOK ANALYTICS
 # =========================
 
-# --- Secrets ---
 PAGE_ID = st.secrets["facebook"]["page_id"]
 ACCESS_TOKEN = st.secrets["facebook"]["access_token"]
 
-# --- Helpers ---
 def get_fb_prev_month(year, month):
-    """Robust previous month calculation for Facebook metrics."""
     if month == 1:
         return year - 1, 12
     else:
@@ -675,60 +747,52 @@ def get_delta_icon_and_color(val):
     else:
         return "", "#aaa"
 
-# --- Data ---
 today = date.today()
 cy, cm = today.year, today.month
 py, pm = get_fb_prev_month(cy, cm)
-
 cur_start, cur_end = get_fb_month_range(cy, cm)
 prev_start, prev_end = get_fb_month_range(py, pm)
-
 cur_since, cur_until = cur_start.isoformat(), cur_end.isoformat()
 prev_since, prev_until = prev_start.isoformat(), prev_end.isoformat()
-
 cur_views = get_insight("page_views_total", cur_since, cur_until)
 prev_views = get_insight("page_views_total", prev_since, prev_until)
 views_percent = safe_percent(prev_views, cur_views)
-
 cur_likes = get_insight("page_fans", cur_since, cur_until)
 prev_likes = get_insight("page_fans", prev_since, prev_until)
 likes_percent = safe_percent(prev_likes, cur_likes)
-
 cur_followers = get_insight("page_follows", cur_since, cur_until)
 prev_followers = get_insight("page_follows", prev_since, prev_until)
 followers_percent = safe_percent(prev_followers, cur_followers)
-
 cur_posts_list = get_posts(cur_since, cur_until)
 prev_posts_list = get_posts(prev_since, prev_until)
 cur_posts = len(cur_posts_list)
 prev_posts = len(prev_posts_list)
 posts_percent = safe_percent(prev_posts, cur_posts)
 
-# --- Circle metrics config (colors match main dashboard, labels, values, deltas) ---
 fb_circles = [
     {
         "title": "Page Views",
         "value": cur_views,
         "delta": views_percent,
-        "color": "#2d448d",  # dark blue
+        "color": "#2d448d",
     },
     {
         "title": "Page Likes",
         "value": cur_likes,
         "delta": likes_percent,
-        "color": "#a6ce39",  # green
+        "color": "#a6ce39",
     },
     {
         "title": "Page Followers",
         "value": cur_followers,
         "delta": followers_percent,
-        "color": "#459fda",  # light blue
+        "color": "#459fda",
     },
     {
         "title": "Posts (This Month)",
         "value": cur_posts,
         "delta": posts_percent,
-        "color": "#d178a9",  # pink
+        "color": "#d178a9",
     }
 ]
 
@@ -739,7 +803,6 @@ fb_tooltips = [
     "Total posts published on your Facebook page this month."
 ]
 
-# --- CSS for circles (reuse style for consistency) ---
 st.markdown("""
 <style>
 .fb-section-header {
@@ -841,7 +904,6 @@ st.markdown("""
 
 st.markdown('<div class="fb-section-header">Facebook Page Analytics</div>', unsafe_allow_html=True)
 
-# --- Place circles SIDE BY SIDE using st.columns for robust Streamlit layout ---
 fb_cols = st.columns(4)
 for i, col in enumerate(fb_cols):
     entry = fb_circles[i]
@@ -874,7 +936,6 @@ for i, col in enumerate(fb_cols):
 if all(x["value"] == 0 for x in fb_circles):
     st.warning("No data detected for any metric. If your Facebook page is new, or if your API token is missing permissions, you may see zeros. Double-check your Facebook access token, permissions, and that your page has analytics data.")
 
-# --- Posts Table ---
 st.subheader(f"Posts Published in {cur_start.strftime('%B %Y')} ({fb_circles[3]['value']} posts)")
 if fb_circles[3]['value'] > 0:
     post_table = [
