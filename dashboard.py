@@ -2,7 +2,6 @@ import streamlit as st
 from google.oauth2 import service_account
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
 from google.auth.transport.requests import Request as GAuthRequest
 from datetime import datetime, date, timedelta
 from dateutil.relativedelta import relativedelta
@@ -32,33 +31,138 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# =========================
+# CSS for bounce/zoom animation
+# =========================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Fira+Code:wght@400;500;700&display=swap');
-body,.styled-table td,.styled-table th,.section-header,.tooltip .tooltiptext,
-.styled-table,.styled-table thead tr,.tooltip .questionmark,.styled-table tbody tr,
-.styled-table tbody tr:hover,.styled-table tbody tr:nth-of-type(even),
-.styled-table tbody tr:nth-of-type(odd),.styled-table th,.styled-table td,
-.styled-table thead tr { font-family: 'Lato', Arial, sans-serif !important; font-weight: 400; }
+
+@keyframes bounceIn {
+  0% { transform: scale(0.7); opacity: 0.5;}
+  60% { transform: scale(1.15);}
+  80% { transform: scale(0.95);}
+  100% { transform: scale(1); opacity: 1;}
+}
+.animated-circle, .fb-animated-circle {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fira Code', monospace !important;
+    font-size: 2.1em;
+    font-weight: 500 !important;
+    color: white;
+    background: #2d448d;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+    transition: transform 0.18s cubic-bezier(.4,2,.3,1), box-shadow 0.22s;
+    margin: 0 auto;
+    padding: 1em;
+    animation: bounceIn 0.6s cubic-bezier(.4,2,.3,1);
+    will-change: transform;
+}
+.animated-circle:hover, .fb-animated-circle:hover {
+    transform: scale(1.09);
+    box-shadow: 0 8px 24px rgba(44,68,141,0.15), 0 2px 8px rgba(0,0,0,0.07);
+}
+
+.animated-circle-value { font-family: 'Fira Code', monospace !important; font-size: 2.1em; font-weight: 500; padding: 0.5em 0.6em; background: transparent; border-radius: 0.7em; width: auto; display: inline-block; letter-spacing: 0.02em; }
 .section-header { font-weight: 700 !important; font-size: 1.7em !important; margin-top: 0.4em; margin-bottom: 0.4em; color: #2d448d; }
 .styled-table th { font-weight: 500 !important; }
 .styled-table td { font-weight: 400 !important; }
 .tooltip .tooltiptext { font-size: 0.80em; font-weight: 300 !important; line-height: 1.4; }
 .tooltip .questionmark { font-weight: 500 !important; font-size: 0.72em; background: #e3e8f0; color: #2d448d; border-radius: 50%; padding: 0 3px; margin-left: 4px; border: 1px solid #d1d5db; box-shadow: 0 1.5px 3px rgba(44,44,44,0.08); display: inline-block; vertical-align: super; line-height: 1em; }
-.animated-circle-value { font-family: 'Fira Code', monospace !important; font-size: 2.1em; font-weight: 500; padding: 0.5em 0.6em; background: transparent; border-radius: 0.7em; width: auto; display: inline-block; letter-spacing: 0.02em; }
-.animated-circle { width: 110px; height: 110px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Lato', Arial, sans-serif !important; font-weight: 500 !important; color: white; background: #2d448d; box-shadow: 0 4px 12px rgba(0,0,0,0.10); transition: transform 0.2s cubic-bezier(.4,2,.3,1); margin: 0 auto; padding: 1em; }
-.animated-circle-delta-note { font-size: 14px; color: #666; font-family: Lato, sans-serif; letter-spacing: 0.01em; }
-.stProgress { margin: 0 !important; padding: 0 !important; }
-table.styled-table { border-collapse: collapse; width: 100%; border-radius: 5px 5px 0 0; overflow: hidden; }
-table.styled-table thead tr { background-color: #2d448d; color: #ffffff; text-transform: uppercase; border-bottom: 4px solid #459fda; }
-table.styled-table th { color: #ffffff; text-transform: uppercase; text-align: center; }
-table.styled-table td { padding: 12px 15px; color: #2d448d !important; }
-table.styled-table tbody tr:nth-of-type(even) { background-color: #f3f3f3; }
-table.styled-table tbody tr:nth-of-type(odd) { background-color: #ffffff; }
-table.styled-table tbody tr:hover { background-color: #a6ce39 !important; }
+.styled-table { border-collapse: collapse; width: 100%; border-radius: 5px 5px 0 0; overflow: hidden; }
+.styled-table thead tr { background-color: #2d448d; color: #ffffff; text-transform: uppercase; border-bottom: 4px solid #459fda; }
+.styled-table th { color: #ffffff; text-transform: uppercase; text-align: center; }
+.styled-table td { padding: 12px 15px; color: #2d448d !important; }
+.styled-table tbody tr:nth-of-type(even) { background-color: #f3f3f3; }
+.styled-table tbody tr:nth-of-type(odd) { background-color: #ffffff; }
+.styled-table tbody tr:hover { background-color: #a6ce39 !important; }
 .tooltip { display: inline-block; position: relative; cursor: pointer; vertical-align: super; }
 .tooltip .tooltiptext { visibility: hidden; width: 240px; background-color: #222; color: #fff; text-align: left; border-radius: 6px; padding: 8px 10px; position: absolute; z-index: 10; bottom: 120%; left: 50%; margin-left: -120px; opacity: 0; transition: opacity 0.2s; }
 .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+
+.fb-section-header {
+    font-weight: 700 !important;
+    font-size: 1.7em !important;
+    margin-top: 1.3em;
+    margin-bottom: 0.8em;
+    color: #2d448d;
+    font-family: 'Lato', Arial, sans-serif !important;
+}
+.fb-metric-row {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 2.5rem;
+    margin-bottom: 2.2rem;
+    margin-top: 1.0rem;
+}
+.fb-metric-card {
+    background: transparent;
+    text-align: center;
+    flex: 0 0 240px;
+    max-width: 270px;
+    min-width: 180px;
+}
+.fb-metric-label {
+    font-size: 1.32rem;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+    margin-top: 0.2rem;
+    color: #2d448d;
+    letter-spacing: 0.09px;
+    font-family: 'Lato', Arial, sans-serif;
+}
+.fb-delta-row {
+    font-size: 1.1rem;
+    font-weight: 500;
+    min-height: 30px;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    justify-content: center;
+}
+.fb-delta-up {
+    color: #2ecc40;
+    font-weight: 700;
+    margin-right: 0.2rem;
+    letter-spacing: 0.5px;
+}
+.fb-delta-down {
+    color: #ff4136;
+    font-weight: 700;
+    margin-right: 0.2rem;
+    letter-spacing: 0.5px;
+}
+.fb-delta-same {
+    color: #aaa;
+    font-weight: 500;
+    margin-right: 0.2rem;
+    letter-spacing: 0.5px;
+}
+.fb-delta-note {
+    color: #666;
+    font-size: 0.98rem;
+    font-weight: 400;
+    margin-left: 0.3rem;
+    letter-spacing: 0.15px;
+}
+@media (max-width: 1200px) {
+    .fb-metric-row { gap: 1.1rem; }
+    .fb-metric-card { flex: 1 1 150px; max-width: 180px;}
+    .fb-animated-circle { width:80px; height:80px; font-size:1.2em;}
+    .fb-metric-label { font-size: 1rem;}
+}
+@media (max-width: 850px) {
+    .fb-metric-row { flex-wrap: wrap; gap: 1.1rem;}
+    .fb-metric-card { flex: 1 1 130px; max-width: 150px;}
+    .fb-animated-circle { width:60px; height:60px; font-size:0.97em;}
+    .fb-metric-label { font-size: 0.82rem;}
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -88,7 +192,7 @@ def format_month_year(d):
 @st.cache_resource
 def get_credentials():
     sa = st.secrets['gcp']['service_account']
-    info = json.loads(sa)   # Parse the JSON string
+    info = json.loads(sa)
     pk = info.get('private_key', '').replace('\\n', '\n')
     if not pk.endswith('\n'):
         pk += '\n'
@@ -175,7 +279,6 @@ def get_gsc_site_stats(site, sd, ed):
         st.error(f"Error fetching GSC site stats: {e}")
         return 0, 0, 0.0
 
-# NEW: Fetch new and returning users
 @st.cache_data(ttl=3600)
 def get_new_returning_users(pid, sd, ed):
     try:
@@ -364,7 +467,7 @@ returning_new_tooltips = [
 ]
 
 # =========================
-# PDF GENERATION LOGIC (CORRECTED)
+# PDF GENERATION LOGIC (unchanged)
 # =========================
 def generate_pdf_report():
     pdf = FPDF()
@@ -525,50 +628,6 @@ for i, col in enumerate(cols_perf):
         )
 
 # =========================
-# NEW VS RETURNING USERS SECTION
-# =========================
-st.markdown('<div class="section-header">New vs Returning Users</div>', unsafe_allow_html=True)
-cols_ret = st.columns(2)
-animation_duration = 0.5
-for i, col in enumerate(cols_ret):
-    entry = returning_new_users_circles[i]
-    with col:
-        st.markdown(
-            f"""<div style='text-align:center; font-weight:500; font-size:22px; margin-bottom:0.2em'>
-                {entry["title"]}
-                <span class='tooltip'>
-                  <span class='questionmark'>?</span>
-                  <span class='tooltiptext'>{returning_new_tooltips[i]}</span>
-                </span>
-            </div>""",
-            unsafe_allow_html=True
-        )
-        placeholder = st.empty()
-        steps = 45
-        for n in range(steps + 1):
-            display_val = int(entry["value"] * n / steps)
-            placeholder.markdown(
-                f"""
-                <div style='margin:0 auto; display:flex; align-items:center; justify-content:center; height:110px;'>
-                  <div class='animated-circle' style='background:{entry["color"]};'>
-                    <span class='animated-circle-value'>{display_val}</span>
-                  </div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-            time.sleep(animation_duration / steps)
-        pct_color = "#2ecc40" if entry["delta"] >= 0 else "#ff4136"
-        pct_icon = "↑" if entry["delta"] >= 0 else "↓"
-        pct_icon_colored = (
-            f"<span style='color:{pct_color}; font-size:1.05em; vertical-align:middle;'>{pct_icon}</span>"
-        )
-        st.markdown(
-            f"<div style='text-align:center; font-size:18px; margin-top:0.2em; color:{pct_color}; font-weight:500'>{pct_icon_colored} <span class='animated-circle-value' style='color:{pct_color}; font-size:1.1em;'>{abs(entry['delta']):.2f}%</span> <span class='animated-circle-delta-note'>(From Previous Month)</span></div>",
-            unsafe_allow_html=True
-        )
-
-# =========================
 # TOP CONTENT SECTION
 # =========================
 st.markdown('<div class="section-header">Top Content</div>', unsafe_allow_html=True)
@@ -588,7 +647,7 @@ def render_top_content_table(data):
 render_top_content_table(top_content_data)
 
 # =========================
-# WEBSITE ANALYTICS SECTION (with 3 animated circles AND 2 side-by-side tables)
+# WEBSITE ANALYTICS SECTION
 # =========================
 st.markdown('<div class="section-header">Website Analytics</div>', unsafe_allow_html=True)
 
@@ -668,6 +727,50 @@ with col2:
 
 st.subheader('Top 10 Organic Queries')
 render_table(sc_df)
+
+# =========================
+# NEW VS RETURNING USERS SECTION
+# =========================
+st.markdown('<div class="section-header">New vs Returning Users</div>', unsafe_allow_html=True)
+cols_ret = st.columns(2)
+animation_duration = 0.5
+for i, col in enumerate(cols_ret):
+    entry = returning_new_users_circles[i]
+    with col:
+        st.markdown(
+            f"""<div style='text-align:center; font-weight:500; font-size:22px; margin-bottom:0.2em'>
+                {entry["title"]}
+                <span class='tooltip'>
+                  <span class='questionmark'>?</span>
+                  <span class='tooltiptext'>{returning_new_tooltips[i]}</span>
+                </span>
+            </div>""",
+            unsafe_allow_html=True
+        )
+        placeholder = st.empty()
+        steps = 45
+        for n in range(steps + 1):
+            display_val = int(entry["value"] * n / steps)
+            placeholder.markdown(
+                f"""
+                <div style='margin:0 auto; display:flex; align-items:center; justify-content:center; height:110px;'>
+                  <div class='animated-circle' style='background:{entry["color"]};'>
+                    <span class='animated-circle-value'>{display_val}</span>
+                  </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            time.sleep(animation_duration / steps)
+        pct_color = "#2ecc40" if entry["delta"] >= 0 else "#ff4136"
+        pct_icon = "↑" if entry["delta"] >= 0 else "↓"
+        pct_icon_colored = (
+            f"<span style='color:{pct_color}; font-size:1.05em; vertical-align:middle;'>{pct_icon}</span>"
+        )
+        st.markdown(
+            f"<div style='text-align:center; font-size:18px; margin-top:0.2em; color:{pct_color}; font-weight:500'>{pct_icon_colored} <span class='animated-circle-value' style='color:{pct_color}; font-size:1.1em;'>{abs(entry['delta']):.2f}%</span> <span class='animated-circle-delta-note'>(From Previous Month)</span></div>",
+            unsafe_allow_html=True
+        )
 
 # =========================
 # SOCIAL MEDIA ANALYTICS REPORTING DASHBOARD STARTS
@@ -802,105 +905,6 @@ fb_tooltips = [
     "The number of followers of your Facebook page during the selected period.",
     "Total posts published on your Facebook page this month."
 ]
-
-st.markdown("""
-<style>
-.fb-section-header {
-    font-weight: 700 !important;
-    font-size: 1.7em !important;
-    margin-top: 1.3em;
-    margin-bottom: 0.8em;
-    color: #2d448d;
-    font-family: 'Lato', Arial, sans-serif !important;
-}
-.fb-metric-row {
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: center;
-    gap: 2.5rem;
-    margin-bottom: 2.2rem;
-    margin-top: 1.0rem;
-}
-.fb-metric-card {
-    background: transparent;
-    text-align: center;
-    flex: 0 0 240px;
-    max-width: 270px;
-    min-width: 180px;
-}
-.fb-metric-label {
-    font-size: 1.32rem;
-    font-weight: 600;
-    margin-bottom: 0.6rem;
-    margin-top: 0.2rem;
-    color: #2d448d;
-    letter-spacing: 0.09px;
-    font-family: 'Lato', Arial, sans-serif;
-}
-.fb-animated-circle {
-    margin: 0 auto;
-    width: 110px;
-    height: 110px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.1em;
-    font-weight: 500;
-    color: #fff;
-    margin-bottom: 0.6rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.10);
-    font-family: 'Fira Code', monospace !important;
-    transition: box-shadow .2s;
-}
-.fb-delta-row {
-    font-size: 1.1rem;
-    font-weight: 500;
-    min-height: 30px;
-    display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    justify-content: center;
-}
-.fb-delta-up {
-    color: #2ecc40;
-    font-weight: 700;
-    margin-right: 0.2rem;
-    letter-spacing: 0.5px;
-}
-.fb-delta-down {
-    color: #ff4136;
-    font-weight: 700;
-    margin-right: 0.2rem;
-    letter-spacing: 0.5px;
-}
-.fb-delta-same {
-    color: #aaa;
-    font-weight: 500;
-    margin-right: 0.2rem;
-    letter-spacing: 0.5px;
-}
-.fb-delta-note {
-    color: #666;
-    font-size: 0.98rem;
-    font-weight: 400;
-    margin-left: 0.3rem;
-    letter-spacing: 0.15px;
-}
-@media (max-width: 1200px) {
-    .fb-metric-row { gap: 1.1rem; }
-    .fb-metric-card { flex: 1 1 150px; max-width: 180px;}
-    .fb-animated-circle { width:80px; height:80px; font-size:1.2em;}
-    .fb-metric-label { font-size: 1rem;}
-}
-@media (max-width: 850px) {
-    .fb-metric-row { flex-wrap: wrap; gap: 1.1rem;}
-    .fb-metric-card { flex: 1 1 130px; max-width: 150px;}
-    .fb-animated-circle { width:60px; height:60px; font-size:0.97em;}
-    .fb-metric-label { font-size: 0.82rem;}
-}
-</style>
-""", unsafe_allow_html=True)
 
 st.markdown('<div class="fb-section-header">Facebook Page Analytics</div>', unsafe_allow_html=True)
 
