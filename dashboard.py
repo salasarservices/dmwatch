@@ -777,7 +777,7 @@ render_table(sc_df)
 # =========================
 
 # =========================
-# FACEBOOK ANALYTICS (now correctly using the sidebar month filter)
+# FACEBOOK ANALYTICS
 # =========================
 
 PAGE_ID = st.secrets["facebook"]["page_id"]
@@ -857,9 +857,10 @@ fb_prev_start, fb_prev_end = psd, ped + timedelta(days=1)
 fb_cur_since, fb_cur_until = fb_cur_start.isoformat(), fb_cur_end.isoformat()
 fb_prev_since, fb_prev_until = fb_prev_start.isoformat(), fb_prev_end.isoformat()
 
-cur_views = get_insight("page_views_total", fb_cur_since, fb_cur_until)
-prev_views = get_insight("page_views_total", fb_prev_since, fb_prev_until)
-views_percent = safe_percent(prev_views, cur_views)
+# Replace "Page Views" with "Page Impressions"
+cur_impressions = get_insight("page_impressions", fb_cur_since, fb_cur_until)
+prev_impressions = get_insight("page_impressions", fb_prev_since, fb_prev_until)
+impressions_percent = safe_percent(prev_impressions, cur_impressions)
 cur_likes = get_insight("page_fans", fb_cur_since, fb_cur_until)
 prev_likes = get_insight("page_fans", fb_prev_since, fb_prev_until)
 likes_percent = safe_percent(prev_likes, cur_likes)
@@ -874,9 +875,9 @@ posts_percent = safe_percent(prev_posts, cur_posts)
 
 fb_circles = [
     {
-        "title": "Page Views",
-        "value": cur_views,
-        "delta": views_percent,
+        "title": "Page Impressions",
+        "value": cur_impressions,
+        "delta": impressions_percent,
         "color": "#2d448d",
     },
     {
@@ -900,7 +901,7 @@ fb_circles = [
 ]
 
 fb_tooltips = [
-    "The total number of times your Facebook page was viewed during the selected period.",
+    "The total number of times any content from your Facebook page was displayed to users (impressions) during the selected period.",
     "The total number of likes your Facebook page has received during the selected period.",
     "The number of followers of your Facebook page during the selected period.",
     "Total posts published on your Facebook page this month."
