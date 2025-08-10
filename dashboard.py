@@ -777,24 +777,16 @@ render_table(sc_df)
 # =========================
 
 # =========================
-# FACEBOOK ANALYTICS
+# FACEBOOK ANALYTICS (now correctly using the sidebar month filter)
 # =========================
 
 PAGE_ID = st.secrets["facebook"]["page_id"]
 ACCESS_TOKEN = st.secrets["facebook"]["access_token"]
 
-def get_fb_prev_month(year, month):
-    if month == 1:
-        return year - 1, 12
-    else:
-        return year, month - 1
-
-def get_fb_month_range(year, month):
-    start = date(year, month, 1)
-    if month == 12:
-        end = date(year + 1, 1, 1)
-    else:
-        end = date(year, month + 1, 1)
+def get_fb_month_range_from_dates(start_date):
+    # Facebook Graph API "until" is exclusive, so add 1 day
+    start = start_date
+    end = start_date + relativedelta(months=1)
     return start, end
 
 def get_insight(metric, since, until):
@@ -850,24 +842,32 @@ def get_delta_icon_and_color(val):
     else:
         return "", "#aaa"
 
-today = date.today()
-cy, cm = today.year, today.month
-py, pm = get_fb_prev_month(cy, cm)
-cur_start, cur_end = get_fb_month_range(cy, cm)
-prev_start, prev_end = get_fb_month_range(py, pm)
-cur_since, cur_until = cur_start.isoformat(), cur_end.isoformat()
-prev_since, prev_until = prev_start.isoformat(), prev_end.isoformat()
-cur_views = get_insight("page_views_total", cur_since, cur_until)
-prev_views = get_insight("page_views_total", prev_since, prev_until)
+def get_post_likes(post_id, access_token):
+    url = f"https://graph.facebook.com/v19.0/{post_id}?fields=likes.summary(true)&access_token={access_token}"
+    try:
+        resp = requests.get(url).json()
+        return resp.get('likes', {}).get('summary', {}).get('total_count', 0)
+    except Exception:
+        return 0
+
+# Use the sidebar filter months!
+fb_cur_start, fb_cur_end = sd, ed + timedelta(days=1) # Facebook's "until" is exclusive
+fb_prev_start, fb_prev_end = psd, ped + timedelta(days=1)
+
+fb_cur_since, fb_cur_until = fb_cur_start.isoformat(), fb_cur_end.isoformat()
+fb_prev_since, fb_prev_until = fb_prev_start.isoformat(), fb_prev_end.isoformat()
+
+cur_views = get_insight("page_views_total", fb_cur_since, fb_cur_until)
+prev_views = get_insight("page_views_total", fb_prev_since, fb_prev_until)
 views_percent = safe_percent(prev_views, cur_views)
-cur_likes = get_insight("page_fans", cur_since, cur_until)
-prev_likes = get_insight("page_fans", prev_since, prev_until)
+cur_likes = get_insight("page_fans", fb_cur_since, fb_cur_until)
+prev_likes = get_insight("page_fans", fb_prev_since, fb_prev_until)
 likes_percent = safe_percent(prev_likes, cur_likes)
-cur_followers = get_insight("page_follows", cur_since, cur_until)
-prev_followers = get_insight("page_follows", prev_since, prev_until)
+cur_followers = get_insight("page_follows", fb_cur_since, fb_cur_until)
+prev_followers = get_insight("page_follows", fb_prev_since, fb_prev_until)
 followers_percent = safe_percent(prev_followers, cur_followers)
-cur_posts_list = get_posts(cur_since, cur_until)
-prev_posts_list = get_posts(prev_since, prev_until)
+cur_posts_list = get_posts(fb_cur_since, fb_cur_until)
+prev_posts_list = get_posts(fb_prev_since, fb_prev_until)
 cur_posts = len(cur_posts_list)
 prev_posts = len(prev_posts_list)
 posts_percent = safe_percent(prev_posts, cur_posts)
@@ -940,17 +940,7 @@ for i, col in enumerate(fb_cols):
 if all(x["value"] == 0 for x in fb_circles):
     st.warning("No data detected for any metric. If your Facebook page is new, or if your API token is missing permissions, you may see zeros. Double-check your Facebook access token, permissions, and that your page has analytics data.")
 
-from datetime import datetime
-
-def get_post_likes(post_id, access_token):
-    url = f"https://graph.facebook.com/v19.0/{post_id}?fields=likes.summary(true)&access_token={access_token}"
-    try:
-        resp = requests.get(url).json()
-        return resp.get('likes', {}).get('summary', {}).get('total_count', 0)
-    except Exception:
-        return 0
-
-month_title = cur_start.strftime('%B %Y')
+month_title = fb_cur_start.strftime('%B %Y')
 st.markdown(f"<h3 style='color:#2d448d;'>Number of Post in {month_title}</h3>", unsafe_allow_html=True)
 
 if fb_circles[3]['value'] > 0:
