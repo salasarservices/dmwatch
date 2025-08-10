@@ -68,7 +68,7 @@ st.markdown("""
     box-shadow: 0 8px 24px rgba(44,68,141,0.15), 0 2px 8px rgba(0,0,0,0.07);
 }
 
-.animated-circle-value { font-family: 'Fira Code', monospace !important; font-size: 2.1em; font-weight: 500; padding: 0.5em 0.6em; background: transparent; border-radius: 0.7em; width: auto; display: inline-block; letter-spacing: 0.02em; }
+.animated-circle-value { font-family: 'Fira Code', monospace !important; font-size: 1.1em; font-weight: 500; padding: 0.5em 0.6em; background: transparent; border-radius: 0.7em; width: auto; display: inline-block; letter-spacing: 0.02em; }
 .section-header { font-weight: 700 !important; font-size: 1.7em !important; margin-top: 0.4em; margin-bottom: 0.4em; color: #2d448d; }
 .styled-table th { font-weight: 500 !important; }
 .styled-table td { font-weight: 400 !important; }
