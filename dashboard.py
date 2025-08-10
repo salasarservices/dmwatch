@@ -619,8 +619,9 @@ for i, col in enumerate(cols_perf):
         pct_icon_colored = (
             f"<span style='color:{pct_color}; font-size:1.05em; vertical-align:middle;'>{pct_icon}</span>"
         )
+        # UPDATED LINE BELOW
         pct_delta_text = (
-            f"{pct_icon_colored} <span class='animated-circle-value' style='color:{pct_color}; font-size:1.1em;'>{abs(entry['delta']):.2f}%</span> <span class='animated-circle-delta-note'>(From Previous Month)</span>"
+            f"{pct_icon_colored} <span class='animated-circle-value' style='color:{pct_color}; font-size:1.1em;'>{abs(entry['delta']):.2f}%</span> <span class='animated-circle-delta-note'>(vs. Previous Month)</span>"
         )
         st.markdown(
             f"<div style='text-align:center; font-size:18px; margin-top:0.2em; color:{pct_color}; font-weight:500'>{pct_delta_text}</div>",
