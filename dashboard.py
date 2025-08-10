@@ -940,18 +940,21 @@ for i, col in enumerate(fb_cols):
 if all(x["value"] == 0 for x in fb_circles):
     st.warning("No data detected for any metric. If your Facebook page is new, or if your API token is missing permissions, you may see zeros. Double-check your Facebook access token, permissions, and that your page has analytics data.")
 
-st.subheader(f"Posts Published in {cur_start.strftime('%B %Y')} ({fb_circles[3]['value']} posts)")
 if fb_circles[3]['value'] > 0:
-    post_table = [
-        {
-            "ID": post["id"],
-            "Created Time": datetime.strptime(post["created_time"].replace("+0000", ""), "%Y-%m-%dT%H:%M:%S").strftime("%Y-%m-%d %H:%M"),
-            "Message": post.get("message", "")[:100] + ("..." if len(post.get("message", "")) > 100 else "")
-        }
-        for post in cur_posts_list
-    ]
+    post_table = []
+    for idx, post in enumerate(cur_posts_list, 1):  # Start at 1
+        post_id = post["id"]
+        picture_url = f"https://graph.facebook.com/v19.0/{post_id}/picture?access_token={ACCESS_TOKEN}"
+        created_time = datetime.strptime(post["created_time"].replace("+0000", ""), "%Y-%m-%dT%H:%M:%S").strftime("%Y-%m-%d %H:%M")
+        message = post.get("message", "")[:100] + ("..." if len(post.get("message", "")) > 100 else "")
+        post_table.append({
+            "No.": idx,
+            "Thumbnail": f'<img src="{picture_url}" style="height:36px;border-radius:6px;">',
+            "Created Time": created_time,
+            "Message": message
+        })
     df = pd.DataFrame(post_table)
-    st.dataframe(df, use_container_width=True)
+    st.markdown(df.to_html(escape=False, index=False), unsafe_allow_html=True)
 else:
     st.info("No posts published this month.")
 
