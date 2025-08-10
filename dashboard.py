@@ -940,23 +940,42 @@ for i, col in enumerate(fb_cols):
 if all(x["value"] == 0 for x in fb_circles):
     st.warning("No data detected for any metric. If your Facebook page is new, or if your API token is missing permissions, you may see zeros. Double-check your Facebook access token, permissions, and that your page has analytics data.")
 
+from datetime import datetime
+
+def get_post_likes(post_id, access_token):
+    url = f"https://graph.facebook.com/v19.0/{post_id}?fields=likes.summary(true)&access_token={access_token}"
+    try:
+        resp = requests.get(url).json()
+        return resp.get('likes', {}).get('summary', {}).get('total_count', 0)
+    except Exception:
+        return 0
+
+month_title = cur_start.strftime('%B %Y')
+st.markdown(f"<h3 style='color:#2d448d;'>Number of Post in {month_title}</h3>", unsafe_allow_html=True)
+
 if fb_circles[3]['value'] > 0:
     post_table = []
-    for idx, post in enumerate(cur_posts_list, 1):  # Start at 1
+    for idx, post in enumerate(cur_posts_list, 1):
         post_id = post["id"]
-        picture_url = f"https://graph.facebook.com/v19.0/{post_id}/picture?access_token={ACCESS_TOKEN}"
-        created_time = datetime.strptime(post["created_time"].replace("+0000", ""), "%Y-%m-%dT%H:%M:%S").strftime("%Y-%m-%d %H:%M")
-        message = post.get("message", "")[:100] + ("..." if len(post.get("message", "")) > 100 else "")
+        # Get first 50 chars of message in bold
+        message = post.get("message", "")
+        title_text = (message[:50] + "...") if len(message) > 50 else message
+        title_html = f"<b>{title_text}</b>"
+        # Format date like "2 Aug 2025"
+        created_time = datetime.strptime(
+            post["created_time"].replace("+0000", ""), "%Y-%m-%dT%H:%M:%S"
+        ).strftime("%-d %b %Y")
+        # Get post likes
+        likes = get_post_likes(post_id, ACCESS_TOKEN)
         post_table.append({
-            "No.": idx,
-            "Thumbnail": f'<img src="{picture_url}" style="height:36px;border-radius:6px;">',
-            "Created Time": created_time,
-            "Message": message
+            "Post Count": idx,
+            "Post Title": title_html,
+            "Date & time": created_time,
+            "Post Likes": likes
         })
     df = pd.DataFrame(post_table)
     st.markdown(df.to_html(escape=False, index=False), unsafe_allow_html=True)
 else:
     st.info("No posts published this month.")
-
 st.caption("All data is pulled live from Facebook Graph API. Tokens and IDs are loaded securely from Streamlit secrets.")
 # END OF DASHBOARD
