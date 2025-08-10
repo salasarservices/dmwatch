@@ -706,28 +706,6 @@ for i, col in enumerate(cols):
             unsafe_allow_html=True
         )
 
-# --- Two side-by-side tables ---
-col1, col2 = st.columns(2)
-with col1:
-    st.subheader('Active Users by Country (Top 5)')
-    country_df = pd.DataFrame(country_data)
-    def flag_html(row):
-        code = country_name_to_code(row['country'])
-        flag_url = f"https://flagcdn.com/16x12/{code}.png" if code else ""
-        flag_img = f'<img src="{flag_url}" style="height:12px;margin-right:7px;vertical-align:middle;">' if code else ""
-        return f"{flag_img}{row['country']}"
-    country_df['Country'] = country_df.apply(flag_html, axis=1)
-    country_df = country_df[['Country', 'activeUsers']]
-    country_df.rename(columns={'activeUsers': 'Active Users'}, inplace=True)
-    st.markdown(country_df.to_html(escape=False, index=False, classes='styled-table'), unsafe_allow_html=True)
-
-with col2:
-    st.subheader('Traffic Acquisition by Channel')
-    render_table(traf_df)
-
-st.subheader('Top 10 Organic Queries')
-render_table(sc_df)
-
 # =========================
 # NEW VS RETURNING USERS SECTION
 # =========================
@@ -771,6 +749,28 @@ for i, col in enumerate(cols_ret):
             f"<div style='text-align:center; font-size:18px; margin-top:0.2em; color:{pct_color}; font-weight:500'>{pct_icon_colored} <span class='animated-circle-value' style='color:{pct_color}; font-size:1.1em;'>{abs(entry['delta']):.2f}%</span> <span class='animated-circle-delta-note'>(From Previous Month)</span></div>",
             unsafe_allow_html=True
         )
+
+# --- Two side-by-side tables ---
+col1, col2 = st.columns(2)
+with col1:
+    st.subheader('Active Users by Country (Top 5)')
+    country_df = pd.DataFrame(country_data)
+    def flag_html(row):
+        code = country_name_to_code(row['country'])
+        flag_url = f"https://flagcdn.com/16x12/{code}.png" if code else ""
+        flag_img = f'<img src="{flag_url}" style="height:12px;margin-right:7px;vertical-align:middle;">' if code else ""
+        return f"{flag_img}{row['country']}"
+    country_df['Country'] = country_df.apply(flag_html, axis=1)
+    country_df = country_df[['Country', 'activeUsers']]
+    country_df.rename(columns={'activeUsers': 'Active Users'}, inplace=True)
+    st.markdown(country_df.to_html(escape=False, index=False, classes='styled-table'), unsafe_allow_html=True)
+
+with col2:
+    st.subheader('Traffic Acquisition by Channel')
+    render_table(traf_df)
+
+st.subheader('Top 10 Organic Queries')
+render_table(sc_df)
 
 # =========================
 # SOCIAL MEDIA ANALYTICS REPORTING DASHBOARD STARTS
