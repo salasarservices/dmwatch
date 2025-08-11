@@ -778,19 +778,16 @@ with col2:
 import streamlit as st
 from pymongo import MongoClient
 
-# --- MONGODB FETCH FUNCTION ---
 def get_leads_from_mongodb():
     mongo_uri = st.secrets["mongo_uri"]
     client = MongoClient(mongo_uri)
-    db = client["sal-leads"]  # Use your MongoDB database name as in Atlas
+    db = client["sa-leads"]   # Database name as in your Atlas cluster
     leads_collection = db["leads"]
-    leads = list(leads_collection.find({}, {"_id": 0}))  # Exclude MongoDB _id from display
+    leads = list(leads_collection.find({}, {"_id": 0}))  # Exclude MongoDB _id
     return leads
 
-# --- STREAMLIT DASHBOARD ---
 st.title("Leads Dashboard")
 
-# Fetch and display leads from MongoDB
 leads = get_leads_from_mongodb()
 if leads:
     st.write("## Leads Data")
