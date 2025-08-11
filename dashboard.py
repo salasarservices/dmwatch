@@ -775,16 +775,67 @@ with col2:
 # LEADS SECTION
 # =========================
 
+import streamlit as st
+import gspread
+from google.oauth2.service_account import Credentials
 from pymongo import MongoClient
+import json
 
-# Replace <username>, <password>, <dbname> with your actual values
-client = MongoClient("mongodb+srv://<salasarservices>:<Azjukuyuqw6UZfGM>@cluster0.xxxxx.mongodb.net/<dbname>?retryWrites=true&w=majority")
-db = client['<Cluster0>']
-leads_collection = db['leads']
+# --- GOOGLE SHEETS TO MONGODB MIGRATION FUNCTION ---
+def fetch_and_store_sheet_data():
+    # --- Google Sheets Credentials from st.secrets ---
+    creds_json = st.secrets["gcp"]["service_account"]
+    creds_dict = json.loads(creds_json)
+    SPREADSHEET_ID = "1fddhDi8AuSFe_F0vxRijkKWXIMVpyzITkywFzWC84-A"
+    SHEET_NAME = "Sheet1"  # Change if your tab is named differently
 
-# Example: Get all leads
-leads = list(leads_collection.find({}))
-print(leads)
+    creds = Credentials.from_service_account_info(
+        creds_dict,
+        scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"]
+    )
+    gc = gspread.authorize(creds)
+    sheet = gc.open_by_key(SPREADSHEET_ID)
+    worksheet = sheet.worksheet(SHEET_NAME)
+    data = worksheet.get_all_records()
+
+    # --- MongoDB Connection ---
+    mongo_uri = st.secrets["mongo_uri"]  # Your MongoDB connection string in secrets.toml
+    client = MongoClient(mongo_uri)
+    db = client["your_db_name"]  # CHANGE: your actual MongoDB database name
+    leads_collection = db["leads"]
+
+    # --- Store Data in MongoDB ---
+    leads_collection.delete_many({})  # Optional: Clear old data
+    if data:
+        leads_collection.insert_many(data)
+    return len(data)
+
+# --- MONGODB FETCH FUNCTION ---
+def get_leads_from_mongodb():
+    mongo_uri = st.secrets["mongo_uri"]
+    client = MongoClient(mongo_uri)
+    db = client["your_db_name"]  # CHANGE: your actual MongoDB database name
+    leads_collection = db["leads"]
+    leads = list(leads_collection.find({}, {"_id": 0}))  # Exclude MongoDB _id
+    return leads
+
+# --- STREAMLIT DASHBOARD ---
+st.title("Leads Dashboard")
+
+# Button to fetch/update data from Google Sheets into MongoDB
+if st.button("Sync Google Sheet to MongoDB"):
+    count = fetch_and_store_sheet_data()
+    st.success(f"Synced {count} rows from Google Sheet to MongoDB.")
+
+# Fetch and display leads from MongoDB
+leads = get_leads_from_mongodb()
+if leads:
+    st.write("## Leads Data")
+    st.dataframe(leads)
+else:
+    st.warning("No leads data found in MongoDB. Click the button above to sync from Google Sheets.")
+
+# --- (Optional) Add your other dashboard visualizations below ---
 
 # =========================
 # SOCIAL MEDIA ANALYTICS REPORTING DASHBOARD STARTS
