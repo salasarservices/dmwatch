@@ -795,6 +795,9 @@ if leads:
 else:
     st.warning("No leads data found in MongoDB.")
 
+import streamlit as st
+st.write("Secrets keys:", list(st.secrets.keys()))
+
 # =========================
 # SOCIAL MEDIA ANALYTICS REPORTING DASHBOARD STARTS
 # =========================
