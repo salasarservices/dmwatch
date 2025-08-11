@@ -801,7 +801,7 @@ def fetch_and_store_sheet_data():
     # --- MongoDB Connection ---
     mongo_uri = st.secrets["mongo_uri"]  # Your MongoDB connection string in secrets.toml
     client = MongoClient(mongo_uri)
-    db = client["Cluster0"]  # CHANGE: your actual MongoDB database name
+    db = client["sa-leads"]  # <<<< UPDATED: your actual MongoDB database name
     leads_collection = db["leads"]
 
     # --- Store Data in MongoDB ---
@@ -814,9 +814,9 @@ def fetch_and_store_sheet_data():
 def get_leads_from_mongodb():
     mongo_uri = st.secrets["mongo_uri"]
     client = MongoClient(mongo_uri)
-    db = client["your_db_name"]  # CHANGE: your actual MongoDB database name
+    db = client["sa-leads"]  # <<<< UPDATED: your actual MongoDB database name
     leads_collection = db["leads"]
-    leads = list(leads_collection.find({}, {"_id": 0}))  # Exclude MongoDB _id
+    leads = list(leads_collection.find({}, {"_id": 0}))  # Exclude MongoDB _id, or remove ", {'_id': 0}" to show it
     return leads
 
 # --- STREAMLIT DASHBOARD ---
@@ -834,8 +834,6 @@ if leads:
     st.dataframe(leads)
 else:
     st.warning("No leads data found in MongoDB. Click the button above to sync from Google Sheets.")
-
-# --- (Optional) Add your other dashboard visualizations below ---
 
 # =========================
 # SOCIAL MEDIA ANALYTICS REPORTING DASHBOARD STARTS
