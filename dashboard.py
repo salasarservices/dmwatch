@@ -1,5 +1,7 @@
 import streamlit as st
 from google.oauth2 import service_account
+import gspread
+from google.oauth2.service_account import Credentials
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from googleapiclient.discovery import build
 from google.auth.transport.requests import Request as GAuthRequest
@@ -768,6 +770,117 @@ with col1:
 with col2:
     st.subheader('Traffic Acquisition by Channel')
     render_table(traf_df)
+
+# =========================
+# LEADS SECTION
+# =========================
+
+st.markdown('<div class="section-header">Leads</div>', unsafe_allow_html=True)
+
+# Google Sheets API Setup
+SPREADSHEET_ID = "1fddhDi8AuSFe_F0vxRijkKWXIMVpyzITkywFzWC84-A"
+WORKSHEET_NAME = "Sheet1"  # Or whatever tab name is correct
+
+@st.cache_resource
+def get_gspread_client():
+    sa = st.secrets['gcp']['service_account']
+    info = json.loads(sa)
+    creds = Credentials.from_service_account_info(
+        info, scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"]
+    )
+    return gspread.authorize(creds)
+
+def fetch_leads():
+    gc = get_gspread_client()
+    sh = gc.open_by_key(SPREADSHEET_ID)
+    ws = sh.worksheet(WORKSHEET_NAME)
+    data = ws.get_all_records()
+    return data
+
+lead_data = fetch_leads()
+total_leads = len(lead_data)
+
+# --- Animated Circle for Total Leads ---
+col_leads, _ = st.columns([1, 4])
+with col_leads:
+    steps = 45
+    animation_duration = 0.5
+    placeholder = st.empty()
+    for n in range(steps + 1):
+        display_val = int(total_leads * n / steps)
+        placeholder.markdown(
+            f"""
+            <div style='margin:0 auto; display:flex; align-items:center; justify-content:center; height:110px;'>
+              <div class='animated-circle' style='background:#ff9800; box-shadow: 0 0 18px #ff980088;'>
+                <span class='animated-circle-value' style='font-size:2.3em;'>{display_val}</span>
+              </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        time.sleep(animation_duration / steps)
+    st.markdown(f"<div style='text-align:center; font-size:20px; color:#ff9800; font-weight:700;letter-spacing:1px;'>Total Leads</div>", unsafe_allow_html=True)
+
+# --- Custom Card Table for Leads ---
+def status_circle(status):
+    color = {
+        "Not Interested": "#ff4136",
+        "Closed": "#2ecc40",
+        "Interested": "#ffc107"
+    }.get(status.strip(), "#aaa")
+    return f"<span style='display:inline-block;width:14px;height:14px;border-radius:50%;background:{color};margin-right:7px;vertical-align:middle;'></span>"
+
+if total_leads > 0:
+    # Use only relevant columns, handle missing gracefully
+    leads_df = pd.DataFrame(lead_data)
+    leads_df = leads_df[["Name", "Product", "Allocated To", "Status"]]
+    leads_df = leads_df.fillna("")
+
+    # Build a custom "card" table
+    card_rows = ""
+    for _, row in leads_df.iterrows():
+        card_rows += f"""
+        <div style='
+            background: #fff3e6;
+            border-left: 6px solid #ff9800;
+            border-radius: 10px;
+            margin-bottom: 18px;
+            box-shadow: 0 2px 14px #ff980044;
+            padding: 22px 28px 18px 18px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: flex-start;
+        '>
+            <div style='flex:2;min-width:150px;'>
+                <div style='font-weight:700;font-size:1.13em;color:#2d448d;'>👤 {row["Name"]}</div>
+            </div>
+            <div style='flex:2;min-width:140px;'>
+                <div style='font-size:1em;margin-top:2px;color:#444;'>🔖 {row["Product"]}</div>
+            </div>
+            <div style='flex:2;min-width:140px;'>
+                <div style='font-size:1em;margin-top:2px;color:#444;'>🧑‍💼 {row["Allocated To"]}</div>
+            </div>
+            <div style='flex:1.2;display:flex;align-items:center;'>
+                {status_circle(row["Status"])}
+                <span style='font-size:1.08em; font-weight:600; color:#222;'>{row["Status"]}</span>
+            </div>
+        </div>
+        """
+
+    st.markdown(f"""
+        <style>
+            .leads-cards-container {{
+                margin-top: 1.4em;
+                margin-bottom: 1.4em;
+            }}
+        </style>
+        <div class='leads-cards-container'>
+            {card_rows}
+        </div>
+        """, unsafe_allow_html=True)
+else:
+    st.info("No leads available.")
 
 # =========================
 # SOCIAL MEDIA ANALYTICS REPORTING DASHBOARD STARTS
