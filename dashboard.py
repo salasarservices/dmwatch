@@ -769,9 +769,6 @@ with col2:
     st.subheader('Traffic Acquisition by Channel')
     render_table(traf_df)
 
-st.subheader('Top 10 Organic Queries')
-render_table(sc_df)
-
 # =========================
 # SOCIAL MEDIA ANALYTICS REPORTING DASHBOARD STARTS
 # =========================
