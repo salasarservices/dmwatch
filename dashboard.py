@@ -775,7 +775,16 @@ with col2:
 # LEADS SECTION
 # =========================
 
+from pymongo import MongoClient
 
+# Replace <username>, <password>, <dbname> with your actual values
+client = MongoClient("mongodb+srv://<salasarservices>:<Azjukuyuqw6UZfGM>@cluster0.xxxxx.mongodb.net/<dbname>?retryWrites=true&w=majority")
+db = client['<Cluster0>']
+leads_collection = db['leads']
+
+# Example: Get all leads
+leads = list(leads_collection.find({}))
+print(leads)
 
 # =========================
 # SOCIAL MEDIA ANALYTICS REPORTING DASHBOARD STARTS
