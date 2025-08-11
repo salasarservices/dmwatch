@@ -801,7 +801,7 @@ def fetch_and_store_sheet_data():
     # --- MongoDB Connection ---
     mongo_uri = st.secrets["mongo_uri"]  # Your MongoDB connection string in secrets.toml
     client = MongoClient(mongo_uri)
-    db = client["your_db_name"]  # CHANGE: your actual MongoDB database name
+    db = client["Cluster0"]  # CHANGE: your actual MongoDB database name
     leads_collection = db["leads"]
 
     # --- Store Data in MongoDB ---
