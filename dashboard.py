@@ -652,7 +652,6 @@ render_top_content_table(top_content_data)
 # =========================
 st.markdown('<div class="section-header">Website Analytics</div>', unsafe_allow_html=True)
 
-# --- Three animated circles ---
 circle_colors = ["#2d448d", "#a6ce39", "#459fda"]
 titles = [
     "Total Users",
@@ -703,7 +702,7 @@ for i, col in enumerate(cols):
             f"<span style='color:{pct_color}; font-size:1.05em; vertical-align:middle;'>{pct_icon}</span>"
         )
         st.markdown(
-            f"<div style='text-align:center; font-size:18px; margin-top:0.2em; color:{pct_color}; font-weight:500'>{pct_icon_colored} <span class='animated-circle-value' style='color:{pct_color}; font-size:1.1em;'>{abs(deltas[i]):.2f}%</span> <span class='animated-circle-delta-note'>(From Previous Month)</span></div>",
+            f"<div style='text-align:center; font-size:18px; margin-top:0.2em; color:{pct_color}; font-weight:500'>{pct_icon_colored} <span class='animated-circle-value' style='color:{pct_color}; font-size:1.1em;'>{abs(deltas[i]):.2f}%</span> <span class='animated-circle-delta-note'>(vs. Previous Month)</span></div>",
             unsafe_allow_html=True
         )
 
@@ -747,10 +746,10 @@ for i, col in enumerate(cols_ret):
             f"<span style='color:{pct_color}; font-size:1.05em; vertical-align:middle;'>{pct_icon}</span>"
         )
         st.markdown(
-            f"<div style='text-align:center; font-size:18px; margin-top:0.2em; color:{pct_color}; font-weight:500'>{pct_icon_colored} <span class='animated-circle-value' style='color:{pct_color}; font-size:1.1em;'>{abs(entry['delta']):.2f}%</span> <span class='animated-circle-delta-note'>(From Previous Month)</span></div>",
+            f"<div style='text-align:center; font-size:18px; margin-top:0.2em; color:{pct_color}; font-weight:500'>{pct_icon_colored} <span class='animated-circle-value' style='color:{pct_color}; font-size:1.1em;'>{abs(entry['delta']):.2f}%</span> <span class='animated-circle-delta-note'>(vs. Previous Month)</span></div>",
             unsafe_allow_html=True
         )
-
+        
 # --- Two side-by-side tables ---
 col1, col2 = st.columns(2)
 with col1:
@@ -785,7 +784,6 @@ PAGE_ID = st.secrets["facebook"]["page_id"]
 ACCESS_TOKEN = st.secrets["facebook"]["access_token"]
 
 def get_fb_month_range_from_dates(start_date):
-    # Facebook Graph API "until" is exclusive, so add 1 day
     start = start_date
     end = start_date + relativedelta(months=1)
     return start, end
@@ -851,14 +849,12 @@ def get_post_likes(post_id, access_token):
     except Exception:
         return 0
 
-# Use the sidebar filter months!
-fb_cur_start, fb_cur_end = sd, ed + timedelta(days=1) # Facebook's "until" is exclusive
+fb_cur_start, fb_cur_end = sd, ed + timedelta(days=1)
 fb_prev_start, fb_prev_end = psd, ped + timedelta(days=1)
 
 fb_cur_since, fb_cur_until = fb_cur_start.isoformat(), fb_cur_end.isoformat()
 fb_prev_since, fb_prev_until = fb_prev_start.isoformat(), fb_prev_end.isoformat()
 
-# Replace "Page Views" with "Page Impressions"
 cur_impressions = get_insight("page_impressions", fb_cur_since, fb_cur_until)
 prev_impressions = get_insight("page_impressions", fb_prev_since, fb_prev_until)
 impressions_percent = safe_percent(prev_impressions, cur_impressions)
@@ -932,7 +928,7 @@ for i, col in enumerate(fb_cols):
                 </div>
                 <div class="fb-delta-row">
                     <span class="{delta_class}">{delta_str}</span>
-                    <span class="fb-delta-note">(From Previous Month)</span>
+                    <span class="fb-delta-note">(vs. Previous Month)</span>
                 </div>
             </div>
             """,
@@ -949,15 +945,12 @@ if fb_circles[3]['value'] > 0:
     post_table = []
     for idx, post in enumerate(cur_posts_list, 1):
         post_id = post["id"]
-        # Get first 50 chars of message in bold
         message = post.get("message", "")
         title_text = (message[:50] + "...") if len(message) > 50 else message
         title_html = f"<b>{title_text}</b>"
-        # Format date like "2 Aug 2025"
         created_time = datetime.strptime(
             post["created_time"].replace("+0000", ""), "%Y-%m-%dT%H:%M:%S"
         ).strftime("%-d %b %Y")
-        # Get post likes
         likes = get_post_likes(post_id, ACCESS_TOKEN)
         post_table.append({
             "Post Count": idx,
