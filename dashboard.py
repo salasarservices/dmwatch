@@ -791,10 +791,10 @@ def get_gspread_client():
     return gspread.authorize(creds)
 
 def fetch_leads():
-    gc = get_gspread_client()
-    sh = gc.open_by_key(SPREADSHEET_ID)
-    ws = sh.worksheet(WORKSHEET_NAME)
-    data = ws.get_all_records()
+    gc = get_gspread_client()  # 1. Get the authorized gspread client
+    sh = gc.open_by_key("1fddhDi8AuSFe_F0vxRijkKWXIMVpyzITkywFzWC84-A")  # 2. Open your Sheet by ID
+    ws = sh.worksheet("Sheet1")  # 3. Select the worksheet/tab
+    data = ws.get_all_records()  # 4. Get the data
     return data
 
 lead_data = fetch_leads()
