@@ -1,7 +1,5 @@
 import streamlit as st
 from google.oauth2 import service_account
-import gspread
-from google.oauth2.service_account import Credentials
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from googleapiclient.discovery import build
 from google.auth.transport.requests import Request as GAuthRequest
@@ -15,6 +13,7 @@ import requests
 from PIL import Image
 import pycountry
 import json
+from pymongo import MongoClient
 
 # =========================
 # PAGE CONFIG & STYLES
@@ -775,28 +774,27 @@ with col2:
 # LEADS SECTION
 # =========================
 
-import streamlit as st
-from pymongo import MongoClient
-
 def get_leads_from_mongodb():
-    mongo_uri = st.secrets["mongo_uri"]
-    client = MongoClient(mongo_uri)
-    db = client["sa-leads"]   # Database name as in your Atlas cluster
-    leads_collection = db["leads"]
-    leads = list(leads_collection.find({}, {"_id": 0}))  # Exclude MongoDB _id
-    return leads
+    try:
+        mongo_uri = st.secrets["mongo_uri"]
+        client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
+        db = client["sa-leads"]
+        leads_collection = db["leads"]
+        leads = list(leads_collection.find({}, {"_id": 0}))
+        client.close()
+        return leads
+    except Exception as e:
+        st.error(f"Could not fetch leads: {e}")
+        return []
 
-st.title("Leads Dashboard")
+st.header("Leads Dashboard")
 
 leads = get_leads_from_mongodb()
 if leads:
-    st.write("## Leads Data")
+    st.subheader("Leads Data")
     st.dataframe(leads)
 else:
     st.warning("No leads data found in MongoDB.")
-
-import streamlit as st
-st.write("Secrets keys:", list(st.secrets.keys()))
 
 # =========================
 # SOCIAL MEDIA ANALYTICS REPORTING DASHBOARD STARTS
