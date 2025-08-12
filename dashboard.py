@@ -796,6 +796,18 @@ if leads:
 else:
     st.warning("No leads data found in MongoDB.")
 
+def excel_serial_to_date(serial):
+    """Convert Excel serial date to ISO string."""
+    if not serial:
+        return ""
+    base_date = datetime.datetime(1899, 12, 30)
+    return (base_date + datetime.timedelta(days=int(serial))).strftime('%Y-%m-%d')
+
+# Example usage inside your Streamlit code:
+for lead in leads:
+    if "Date" in lead:
+        lead["Date"] = excel_serial_to_date(lead["Date"])
+
 # =========================
 # SOCIAL MEDIA ANALYTICS REPORTING DASHBOARD STARTS
 # =========================
