@@ -64,6 +64,269 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =========================
+# Loader Animation CSS & Function
+# =========================
+st.markdown("""
+<style>
+.loader {
+ position: relative;
+ width: 2.5em;
+ height: 2.5em;
+ transform: rotate(165deg);
+ margin: 0 auto;
+}
+.loader:before, .loader:after {
+ content: "";
+ position: absolute;
+ top: 50%;
+ left: 50%;
+ display: block;
+ width: 0.5em;
+ height: 0.5em;
+ border-radius: 0.25em;
+ transform: translate(-50%, -50%);
+}
+.loader:before {
+ animation: before8 2s infinite;
+}
+.loader:after {
+ animation: after6 2s infinite;
+}
+@keyframes before8 {
+ 0% { width: 0.5em; box-shadow: 1em -0.5em rgba(225, 20, 98, 0.75), -1em 0.5em rgba(111, 202, 220, 0.75);}
+ 35% { width: 2.5em; box-shadow: 0 -0.5em rgba(225, 20, 98, 0.75), 0 0.5em rgba(111, 202, 220, 0.75);}
+ 70% { width: 0.5em; box-shadow: -1em -0.5em rgba(225, 20, 98, 0.75), 1em 0.5em rgba(111, 202, 220, 0.75);}
+ 100% { box-shadow: 1em -0.5em rgba(225, 20, 98, 0.75), -1em 0.5em rgba(111, 202, 220, 0.75);}
+}
+@keyframes after6 {
+ 0% { height: 0.5em; box-shadow: 0.5em 1em rgba(61, 184, 143, 0.75), -0.5em -1em rgba(233, 169, 32, 0.75);}
+ 35% { height: 2.5em; box-shadow: 0.5em 0 rgba(61, 184, 143, 0.75), -0.5em 0 rgba(233, 169, 32, 0.75);}
+ 70% { height: 0.5em; box-shadow: 0.5em -1em rgba(61, 184, 143, 0.75), -0.5em 1em rgba(233, 169, 32, 0.75);}
+ 100% { box-shadow: 0.5em 1em rgba(61, 184, 143, 0.75), -0.5em -1em rgba(233, 169, 32, 0.75);}
+}
+</style>
+""", unsafe_allow_html=True)
+
+def show_loader(message="Loading..."):
+    st.markdown(
+        f"""
+        <div style="width:100%;text-align:center;margin:1.7em 0;">
+            <div class="loader"></div>
+            <div style="margin-top:0.8em; font-size:1.05em; color:#2d448d; font-weight:500;">{message}</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+# =========================
+# REPLACE EACH SECTION WITH LOADER LOGIC
+# =========================
+
+# 1. Website Performance Section (animated circles)
+st.markdown('<div class="section-header">Website Performance</div>', unsafe_allow_html=True)
+perf_cols = st.columns(3)
+animation_duration = 0.5
+perf_tooltips = [
+    "The total number of times users clicked your website's listing in Google Search results during the selected period.",
+    "The total number of times your website appeared in Google Search results (regardless of clicks) for any query.",
+    "The percentage of impressions that resulted in a click (Click-Through Rate) for your website in Google Search results during the selected period."
+]
+for i, col in enumerate(perf_cols):
+    entry = perf_circles[i]
+    with col:
+        placeholder = st.empty()
+        with placeholder.container():
+            show_loader("Loading metric...")
+            time.sleep(0.6)
+        placeholder.empty()
+        st.markdown(
+            f"""<div style='text-align:center; font-weight:500; font-size:22px; margin-bottom:0.2em'>
+                {entry["title"]}
+                <span class='tooltip'>
+                  <span class='questionmark'>?</span>
+                  <span class='tooltiptext'>{perf_tooltips[i]}</span>
+                </span>
+            </div>""",
+            unsafe_allow_html=True
+        )
+        steps = 45
+        for n in range(steps + 1):
+            if entry["title"] == "Average CTR":
+                display_val = f"{entry['value'] * n / steps:.2f}%"
+            else:
+                display_val = int(entry["value"] * n / steps)
+            st.markdown(
+                f"""
+                <div style='margin:0 auto; display:flex; align-items:center; justify-content:center; height:110px;'>
+                  <div class='animated-circle' style='background:{entry["color"]};'>
+                    <span class='animated-circle-value'>{display_val}</span>
+                  </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            time.sleep(animation_duration / steps)
+        pct_color = "#2ecc40" if entry["delta"] >= 0 else "#ff4136"
+        pct_icon = "↑" if entry["delta"] >= 0 else "↓"
+        pct_icon_colored = (
+            f"<span style='color:{pct_color}; font-size:1.05em; vertical-align:middle;'>{pct_icon}</span>"
+        )
+        pct_delta_text = (
+            f"{pct_icon_colored} <span class='animated-circle-value' style='color:{pct_color}; font-size:1.1em;'>{abs(entry['delta']):.2f}%</span> <span class='animated-circle-delta-note'>(vs. Previous Month)</span>"
+        )
+        st.markdown(
+            f"<div style='text-align:center; font-size:18px; margin-top:0.2em; color:{pct_color}; font-weight:500'>{pct_delta_text}</div>",
+            unsafe_allow_html=True
+        )
+
+# 2. Top Content Table
+top_content_placeholder = st.empty()
+with top_content_placeholder.container():
+    show_loader("Loading Top Content data...")
+    time.sleep(0.7)
+top_content_placeholder.empty()
+st.markdown('<div class="section-header">Top Content</div>', unsafe_allow_html=True)
+render_top_content_table(top_content_data)
+
+# 3. Website Analytics Section (animated circles)
+st.markdown('<div class="section-header">Website Analytics</div>', unsafe_allow_html=True)
+cols = st.columns(3)
+animation_duration = 0.5
+for i, col in enumerate(cols):
+    with col:
+        placeholder = st.empty()
+        with placeholder.container():
+            show_loader("Loading metric...")
+            time.sleep(0.6)
+        placeholder.empty()
+        st.markdown(
+            f"""<div style='text-align:center; font-weight:500; font-size:22px; margin-bottom:0.2em'>
+                {titles[i]}
+                <span class='tooltip'>
+                  <span class='questionmark'>?</span>
+                  <span class='tooltiptext'>{tooltips[i]}</span>
+                </span>
+            </div>""",
+            unsafe_allow_html=True
+        )
+        steps = 45
+        for n in range(steps + 1):
+            display_val = int(values[i] * n / steps)
+            st.markdown(
+                f"""
+                <div style='margin:0 auto; display:flex; align-items:center; justify-content:center; height:110px;'>
+                  <div class='animated-circle' style='background:{circle_colors[i]};'>
+                    <span class='animated-circle-value'>{display_val}</span>
+                  </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            time.sleep(animation_duration / steps)
+        pct_color = "#2ecc40" if deltas[i] >= 0 else "#ff4136"
+        pct_icon = "↑" if deltas[i] >= 0 else "↓"
+        pct_icon_colored = (
+            f"<span style='color:{pct_color}; font-size:1.05em; vertical-align:middle;'>{pct_icon}</span>"
+        )
+        st.markdown(
+            f"<div style='text-align:center; font-size:18px; margin-top:0.2em; color:{pct_color}; font-weight:500'>{pct_icon_colored} <span class='animated-circle-value' style='color:{pct_color}; font-size:1.1em;'>{abs(deltas[i]):.2f}%</span> <span class='animated-circle-delta-note'>(vs. Previous Month)</span></div>",
+            unsafe_allow_html=True
+        )
+
+# 4. New vs Returning Users (animated circles)
+st.markdown('<div class="section-header">New vs Returning Users</div>', unsafe_allow_html=True)
+cols_ret = st.columns(2)
+animation_duration = 0.5
+for i, col in enumerate(cols_ret):
+    entry = returning_new_users_circles[i]
+    with col:
+        placeholder = st.empty()
+        with placeholder.container():
+            show_loader("Loading metric...")
+            time.sleep(0.6)
+        placeholder.empty()
+        st.markdown(
+            f"""<div style='text-align:center; font-weight:500; font-size:22px; margin-bottom:0.2em'>
+                {entry["title"]}
+                <span class='tooltip'>
+                  <span class='questionmark'>?</span>
+                  <span class='tooltiptext'>{returning_new_tooltips[i]}</span>
+                </span>
+            </div>""",
+            unsafe_allow_html=True
+        )
+        steps = 45
+        for n in range(steps + 1):
+            display_val = int(entry["value"] * n / steps)
+            st.markdown(
+                f"""
+                <div style='margin:0 auto; display:flex; align-items:center; justify-content:center; height:110px;'>
+                  <div class='animated-circle' style='background:{entry["color"]};'>
+                    <span class='animated-circle-value'>{display_val}</span>
+                  </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+            time.sleep(animation_duration / steps)
+        pct_color = "#2ecc40" if entry["delta"] >= 0 else "#ff4136"
+        pct_icon = "↑" if entry["delta"] >= 0 else "↓"
+        pct_icon_colored = (
+            f"<span style='color:{pct_color}; font-size:1.05em; vertical-align:middle;'>{pct_icon}</span>"
+        )
+        st.markdown(
+            f"<div style='text-align:center; font-size:18px; margin-top:0.2em; color:{pct_color}; font-weight:500'>{pct_icon_colored} <span class='animated-circle-value' style='color:{pct_color}; font-size:1.1em;'>{abs(entry['delta']):.2f}%</span> <span class='animated-circle-delta-note'>(vs. Previous Month)</span></div>",
+            unsafe_allow_html=True
+        )
+
+# 5. Leads Section (main stats and table)
+st.markdown("## Leads Dashboard")
+leads_placeholder = st.empty()
+with leads_placeholder.container():
+    show_loader("Loading Leads Data...")
+    time.sleep(0.8)
+leads_placeholder.empty()
+# (Now render the leads dashboard and table, as you have already.)
+
+# 6. Facebook Analytics Circles
+st.markdown('<div class="fb-section-header">Facebook Page Analytics</div>', unsafe_allow_html=True)
+fb_cols = st.columns(4)
+for i, col in enumerate(fb_cols):
+    entry = fb_circles[i]
+    with col:
+        fb_placeholder = st.empty()
+        with fb_placeholder.container():
+            show_loader("Loading metric...")
+            time.sleep(0.6)
+        fb_placeholder.empty()
+        icon, colr = get_delta_icon_and_color(entry["delta"])
+        delta_val = abs(round(entry["delta"], 2))
+        delta_str = f"{icon} {delta_val:.2f}%" if icon else f"{delta_val:.2f}%"
+        delta_class = "fb-delta-up" if entry["delta"] > 0 else ("fb-delta-down" if entry["delta"] < 0 else "fb-delta-same")
+        st.markdown(
+            f"""
+            <div class="fb-metric-card">
+                <div class="fb-metric-label">{entry["title"]}
+                    <span class='tooltip'>
+                        <span class='questionmark'>?</span>
+                        <span class='tooltiptext'>{fb_tooltips[i]}</span>
+                    </span>
+                </div>
+                <div class="fb-animated-circle" style="background:{entry['color']};">
+                    <span>{entry["value"]}</span>
+                </div>
+                <div class="fb-delta-row">
+                    <span class="{delta_class}">{delta_str}</span>
+                    <span class="fb-delta-note">(vs. Previous Month)</span>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+# ... [rest of your code for tables, posts, etc. as in your original code] ...
+
+# =========================
 # CSS for bounce/zoom animation
 # =========================
 st.markdown("""
