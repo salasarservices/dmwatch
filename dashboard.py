@@ -774,6 +774,10 @@ with col2:
 # LEADS SECTION
 # =========================
 
+import streamlit as st
+import pandas as pd
+from datetime import datetime, timedelta
+
 def excel_serial_to_month_year(serial):
     try:
         serial = int(float(serial))
@@ -868,7 +872,6 @@ if leads:
     if "DATE" in df.columns:
         df["DATE"] = df["DATE"].apply(excel_serial_to_month_year)
     # Find status and date columns (case-insensitive)
-    columns_upper = [col.upper() for col in df.columns]
     status_col = next((col for col in df.columns if "STATUS" in col.upper()), None)
     date_col = next((col for col in df.columns if "DATE" in col.upper()), None)
     # Titlecase all string columns except status and date
