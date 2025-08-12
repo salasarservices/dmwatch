@@ -797,11 +797,10 @@ else:
     st.warning("No leads data found in MongoDB.")
 
 def excel_serial_to_date(serial):
-    """Convert Excel serial date to ISO string."""
     if not serial:
         return ""
-    base_date = datetime.datetime(1899, 12, 30)
-    return (base_date + datetime.timedelta(days=int(serial))).strftime('%Y-%m-%d')
+    base_date = datetime(1899, 12, 30)  # Excel's zero date
+    return (base_date + timedelta(days=int(serial))).strftime('%Y-%m-%d')
 
 # Example usage inside your Streamlit code:
 for lead in leads:
