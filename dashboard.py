@@ -15,12 +15,15 @@ import pycountry
 import json
 from pymongo import MongoClient
 
-# --- Simple login credentials (store securely for real apps!) ---
+# =========================
+# LOGIN FUNCTION
+# =========================
+
 USERNAME = st.secrets["login"]["username"]
 PASSWORD = st.secrets["login"]["password"]
 
 def login():
-    st.markdown("<h2>Login</h2>", unsafe_allow_html=True)
+    st.markdown("<h2>Dashboard Login</h2>", unsafe_allow_html=True)
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
     login_btn = st.button("Login")
@@ -799,7 +802,6 @@ with col2:
 # LEADS SECTION
 # =========================
 
-
 def excel_serial_to_month_year(serial):
     try:
         serial = int(float(serial))
@@ -827,10 +829,14 @@ st.markdown("## Leads Dashboard")
 
 leads = get_leads_from_mongodb()
 
-# --- Total Leads Logic: SUM of all "Number" fields ---
-total_leads = sum(
-    int(lead["Number"]) for lead in leads if "Number" in lead and str(lead["Number"]).isdigit()
-)
+# --- Total Leads Logic: LAST ROW's "Number" field ---
+if leads and "Number" in leads[-1]:
+    try:
+        total_leads = int(leads[-1]["Number"])
+    except Exception:
+        total_leads = 0
+else:
+    total_leads = 0
 
 # --- Animated Circle for Total Leads ---
 st.markdown(f"""
@@ -865,7 +871,7 @@ st.markdown(f"""
 }}
 </style>
 <div class="circle-animate">{total_leads}</div>
-<div class="lead-label">Total Leads (SUM of Number field)</div>
+<div class="lead-label">Total Leads (last row 'Number' value)</div>
 """, unsafe_allow_html=True)
 
 st.markdown("### Leads Data")
