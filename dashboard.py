@@ -778,7 +778,7 @@ def get_leads_from_mongodb():
     try:
         mongo_uri = st.secrets["mongo_uri"]
         client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
-        db = client["sa-leads"]
+        db = client["sal-leads"]
         leads_collection = db["leads"]
         leads = list(leads_collection.find({}, {"_id": 0}))
         client.close()
