@@ -840,9 +840,9 @@ else:
     total_leads = len(leads)  # fallback if "Number" field missing
 
 # --- Animated Circle for Total Leads ---
-st.markdown("""
+st.markdown(f"""
 <style>
-.circle-animate {
+.circle-animate {{
     margin: 0 auto;
     width: 110px;
     height: 110px;
@@ -856,24 +856,24 @@ st.markdown("""
     font-weight: bold;
     animation: pop 1s ease;
     box-shadow: 0 4px 16px rgba(250, 190, 88, 0.3);
-}
-@keyframes pop {
-    0% { transform: scale(0.5);}
-    80% { transform: scale(1.1);}
-    100% { transform: scale(1);}
-}
-.lead-label {
+}}
+@keyframes pop {{
+    0% {{ transform: scale(0.5);}}
+    80% {{ transform: scale(1.1);}}
+    100% {{ transform: scale(1);}}
+}}
+.lead-label {{
     text-align:center; 
     margin-top: 10px; 
     font-weight:600;
     font-size: 1.1rem;
     color: #fda085;
     letter-spacing: 1px;
-}
+}}
 </style>
-<div class="circle-animate">{}</div>
+<div class="circle-animate">{total_leads}</div>
 <div class="lead-label">Total Leads</div>
-""".format(total_leads), unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 st.markdown("### Leads Data")
 
