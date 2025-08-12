@@ -19,16 +19,18 @@ from pymongo import MongoClient
 # LOGIN FUNCTION
 # =========================
 
-# Apply new CSS style for the input fields
+import streamlit as st
+
+# Apply your custom CSS to Streamlit's input fields
 st.markdown("""
 <style>
 /* From Uiverse.io by VijinV */
-.inputbox {
+div[data-testid="stTextInput"] {
   position: relative;
   width: 196px;
   margin-bottom: 24px;
 }
-.inputbox input {
+div[data-testid="stTextInput"] > div > input {
   position: relative;
   width: 100%;
   padding: 20px 10px 10px;
@@ -42,7 +44,7 @@ st.markdown("""
   transition: 0.5s;
   z-index: 10;
 }
-.inputbox span {
+div[data-testid="stTextInput"] label {
   position: absolute;
   left: 0;
   padding: 20px 10px 10px;
@@ -51,14 +53,15 @@ st.markdown("""
   letter-spacing: 00.05em;
   transition: 0.5s;
   pointer-events: none;
+  top: 0;
 }
-.inputbox input:valid ~span,
-.inputbox input:focus ~span {
+div[data-testid="stTextInput"] > div > input:focus + label,
+div[data-testid="stTextInput"] > div > input:not(:placeholder-shown) + label {
   color: #45f3ff;
   transform: translateX(-10px) translateY(-34px);
   font-size: 0.75em;
 }
-.inputbox i {
+div[data-testid="stTextInput"] i {
   position: absolute;
   left: 0;
   bottom: 0;
@@ -70,8 +73,8 @@ st.markdown("""
   pointer-events: none;
   z-index: 9;
 }
-.inputbox input:valid ~i,
-.inputbox input:focus ~i {
+div[data-testid="stTextInput"] > div > input:focus ~ i,
+div[data-testid="stTextInput"] > div > input:not(:placeholder-shown) ~ i {
   height: 44px;
 }
 </style>
@@ -82,27 +85,11 @@ PASSWORD = st.secrets["login"]["password"]
 
 def login():
     st.markdown("<h2 style='color:#23242a;'>Login</h2>", unsafe_allow_html=True)
-    # Render custom input boxes with Streamlit's input widgets
     col1, col2 = st.columns([1, 1])
     with col1:
-        username = st.text_input("Username", key="username_native", label_visibility="collapsed", placeholder="")
-        st.markdown("""
-        <div class="inputbox">
-            <input type="text" value="{0}" required/>
-            <span>Username</span>
-            <i></i>
-        </div>
-        """.format(username), unsafe_allow_html=True)
+        username = st.text_input("Username", key="username_native")
     with col2:
-        password = st.text_input("Password", type="password", key="password_native", label_visibility="collapsed", placeholder="")
-        st.markdown("""
-        <div class="inputbox">
-            <input type="password" value="{0}" required/>
-            <span>Password</span>
-            <i></i>
-        </div>
-        """.format(password), unsafe_allow_html=True)
-
+        password = st.text_input("Password", type="password", key="password_native")
     login_btn = st.button("Login")
     if login_btn:
         if username == USERNAME and password == PASSWORD:
