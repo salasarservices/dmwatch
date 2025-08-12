@@ -987,7 +987,7 @@ st.markdown("### Leads Data")
 
 # ======= ADD DATE COLUMN BEFORE NUMBER, COLOR IT, AND SHOW TABLE =======
 if not df.empty:
-    # Insert Date column before Number
+    # Insert Date column before Number, but drop if already exists
     if "Number" in df.columns:
         date_column = []
         for i in range(len(df)):
@@ -1002,8 +1002,12 @@ if not df.empty:
             else:
                 date_column.append("")
         insert_at = list(df.columns).index("Number")
+        if "Date" in df.columns:
+            df = df.drop(columns=["Date"])
         df.insert(insert_at, "Date", date_column)
     else:
+        if "Date" in df.columns:
+            df = df.drop(columns=["Date"])
         df.insert(0, "Date", "")
 
     # Color the Lead Status column
