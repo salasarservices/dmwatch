@@ -830,13 +830,13 @@ def get_leads_from_mongodb():
 
 def lead_status_colored(status):
     status_clean = str(status).strip().replace('\n', '').replace('\r', '')
-    colors = {{
+    colors = {
         "Interested": "#FFD700",
         "Not Interested": "#FB4141",
         "Closed": "#B4E50D"
-    }}
+    }
     color = colors.get(status_clean, "#666")
-    return f"<b style='color: {{color}};'>{{status_clean}}</b>"
+    return f"<b style='color: {color};'>{status_clean}</b>"
 
 st.markdown("## Leads Dashboard")
 
