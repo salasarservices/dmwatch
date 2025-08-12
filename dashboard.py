@@ -845,9 +845,6 @@ st.markdown("## Leads Dashboard")
 leads = get_leads_from_mongodb()
 
 # --- Lead Totals Calculation ---
-def clean_status(status):
-    return str(status).strip().replace('\n', '').replace('\r', '')
-
 if leads:
     df = pd.DataFrame(leads)
     if "Lead Status" in df.columns:
@@ -873,14 +870,14 @@ else:
 # --- Circles Display Row ---
 st.markdown("""
 <style>
-.circles-row {
+.circles-row {{
     display: flex;
     justify-content: center;
     gap: 42px;
     margin-bottom: 30px;
     flex-wrap: wrap;
-}
-.circle-animate {
+}}
+.circle-animate {{
     width: 110px;
     height: 110px;
     border-radius: 50%;
@@ -893,24 +890,24 @@ st.markdown("""
     box-shadow: 0 4px 16px rgba(250, 190, 88, 0.3);
     animation: pop 1s ease;
     margin-bottom: 6px;
-}
-.circle-leads    { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);}
-.circle-int      { background: linear-gradient(135deg, #FFD700 0%, #FFB200 100%);}
-.circle-notint   { background: linear-gradient(135deg, #FB4141 0%, #C91F1F 100%);}
-.circle-closed   { background: linear-gradient(135deg, #B4E50D 0%, #7BA304 100%);}
-.lead-label {
+}}
+.circle-leads    {{ background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);}}
+.circle-int      {{ background: linear-gradient(135deg, #FFD700 0%, #FFB200 100%);}}
+.circle-notint   {{ background: linear-gradient(135deg, #FB4141 0%, #C91F1F 100%);}}
+.circle-closed   {{ background: linear-gradient(135deg, #B4E50D 0%, #7BA304 100%);}}
+.lead-label {{
     text-align:center; 
     font-weight:600;
     font-size: 1.1rem;
     color: #888;
     letter-spacing: 1px;
     margin-bottom: 0.7rem;
-}
-@keyframes pop {
-    0% { transform: scale(0.5);}
-    80% { transform: scale(1.1);}
-    100% { transform: scale(1);}
-}
+}}
+@keyframes pop {{
+    0% {{ transform: scale(0.5);}}
+    80% {{ transform: scale(1.1);}}
+    100% {{ transform: scale(1);}}
+}}
 </style>
 <div class="circles-row">
     <div>
