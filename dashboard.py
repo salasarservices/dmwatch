@@ -774,17 +774,13 @@ with col2:
 # LEADS SECTION
 # =========================
 
-import streamlit as st
-import pandas as pd
-from datetime import datetime, timedelta
-
 def excel_serial_to_month_year(serial):
     try:
         serial = int(float(serial))
         base_date = datetime(1899, 12, 30)
         d = base_date + timedelta(days=serial)
         return d.strftime("%B %Y")
-    except:
+    except Exception:
         return ""
 
 def status_circle(status):
@@ -797,7 +793,10 @@ def status_circle(status):
         color = "#f1c40f"
     else:
         color = "#bdc3c7"
-    return f'<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:{color};margin-right:6px;vertical-align:middle"></span>{status.title()}'
+    return (
+        f'<span style="display:inline-block;width:12px;height:12px;border-radius:50%;'
+        f'background:{color};margin-right:6px;vertical-align:middle"></span>{status.title()}'
+    )
 
 def get_leads_from_mongodb():
     try:
@@ -817,12 +816,12 @@ st.set_page_config(page_title="Leads Dashboard", layout="wide")
 st.title("Leads Dashboard")
 
 leads = get_leads_from_mongodb()
+total_leads = sum(
+    int(lead["Number"]) for lead in leads if "Number" in lead and str(lead["Number"]).isdigit()
+)
 
-# --- Total Leads Logic: SUM of all "Number" fields ---
-total_leads = sum(int(lead["Number"]) for lead in leads if "Number" in lead and str(lead["Number"]).isdigit())
-
-# --- Animated Circle for Total Leads ---
-st.markdown(f"""
+st.markdown(
+    f"""
 <style>
 .circle-animate {{
     margin: 0 auto;
@@ -855,7 +854,9 @@ st.markdown(f"""
 </style>
 <div class="circle-animate">{total_leads}</div>
 <div class="lead-label">Total Leads (SUM of Number field)</div>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 st.markdown("### Leads Data")
 
@@ -884,7 +885,8 @@ if leads:
     # UPPERCASE column headers for display
     df.columns = [str(col).upper() for col in df.columns]
     # Custom styled table
-    st.markdown("""
+    st.markdown(
+        """
     <style>
     .custom-table {
         width: 100%;
@@ -910,10 +912,12 @@ if leads:
         border-top: 1px solid #eee;
     }
     </style>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
     st.markdown(
         df.to_html(escape=False, index=False, classes="custom-table"),
-        unsafe_allow_html=True
+        unsafe_allow_html=True,
     )
 else:
     st.info("No leads data found in MongoDB.")
