@@ -774,6 +774,10 @@ with col2:
 # LEADS SECTION
 # =========================
 
+import streamlit as st
+import pandas as pd
+from datetime import datetime, timedelta
+
 def excel_serial_to_month_year(serial):
     try:
         serial = int(float(serial))
@@ -875,8 +879,8 @@ if leads:
         df["DATE"] = df["DATE"].apply(excel_serial_to_month_year)
     status_col = "Lead Status" if "Lead Status" in df.columns else "LEAD STATUS"
     date_col = "DATE"
-    df = df.apply(lambda row: titlecase_except_status(row, status_col, date_col), axis=1)
-    df = pd.DataFrame(df, columns=df.columns)
+    # Fix: .apply returns a DataFrame, so don't try to re-wrap as DataFrame!
+    df = df.apply(lambda row: titlecase_except_status(row, status_col, date_col), axis=1, result_type='expand')
     df.columns = [str(col).upper() for col in df.columns]
     status_column = [col for col in df.columns if "STATUS" in col][0]
     df[status_column] = df[status_column].apply(status_circle)
