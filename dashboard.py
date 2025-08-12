@@ -19,13 +19,106 @@ from pymongo import MongoClient
 # LOGIN FUNCTION
 # =========================
 
+# --- Add custom CSS for the login fields ---
+st.markdown("""
+<style>
+/* From Uiverse.io by AmIt-DasIT */
+.login-container {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: flex-start;
+  margin-left: 10px;
+  margin-top: 18px;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  position: relative;
+  color: white;
+}
+
+.container .label {
+  font-size: 15px;
+  padding-left: 10px;
+  position: absolute;
+  top: 13px;
+  transition: 0.3s;
+  pointer-events: none;
+  color: #fff;
+}
+
+.input {
+  width: 250px;
+  height: 45px;
+  border: none;
+  outline: none;
+  padding: 0px 7px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 15px;
+  background-color: transparent;
+  background: rgba(0,0,0,0.3);
+  box-shadow: 3px 3px 10px rgba(0,0,0,1),
+  -1px -1px 6px rgba(255, 255, 255, 0.4);
+}
+
+.input:focus {
+  border: 2px solid transparent;
+  color: #fff;
+  box-shadow: 3px 3px 10px rgba(0,0,0,1),
+  -1px -1px 6px rgba(255, 255, 255, 0.4),
+  inset 3px 3px 10px rgba(0,0,0,1),
+  inset -1px -1px 6px rgba(255, 255, 255, 0.4);
+}
+
+.container .input:valid ~ .label,
+.container .input:focus ~ .label {
+  transition: 0.3s;
+  padding-left: 2px;
+  transform: translateY(-35px);
+}
+
+.container .input:valid,
+.container .input:focus {
+  box-shadow: 3px 3px 10px rgba(0,0,0,1),
+  -1px -1px 6px rgba(255, 255, 255, 0.4),
+  inset 3px 3px 10px rgba(0,0,0,1),
+  inset -1px -1px 6px rgba(255, 255, 255, 0.4);
+}
+</style>
+""", unsafe_allow_html=True)
+
 USERNAME = st.secrets["login"]["username"]
 PASSWORD = st.secrets["login"]["password"]
 
 def login():
-    st.markdown("<h2>Dashboard Login</h2>", unsafe_allow_html=True)
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
+    st.markdown("<h2 style='color:white;'>Login</h2>", unsafe_allow_html=True)
+    st.markdown("<div class='login-container'>", unsafe_allow_html=True)
+
+    # Username field
+    st.markdown("""
+    <div class="container">
+        <input id="username" name="username" class="input" type="text" required autocomplete="username"
+            value="" placeholder=" " />
+        <label for="username" class="label">Username</label>
+    </div>
+    """, unsafe_allow_html=True)
+    # Password field
+    st.markdown("""
+    <div class="container">
+        <input id="password" name="password" class="input" type="password" required autocomplete="current-password"
+            value="" placeholder=" " />
+        <label for="password" class="label">Password</label>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Get values from JS (requires Streamlit components or st.text_input fallback)
+    username = st.text_input("", key="username_native", label_visibility="collapsed", placeholder="Username")
+    password = st.text_input("", key="password_native", label_visibility="collapsed", type="password", placeholder="Password")
+
     login_btn = st.button("Login")
     if login_btn:
         if username == USERNAME and password == PASSWORD:
@@ -34,6 +127,8 @@ def login():
             st.rerun()
         else:
             st.error("Invalid username or password.")
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
@@ -865,13 +960,13 @@ st.markdown(f"""
     text-align:center; 
     margin-top: 10px; 
     font-weight:600;
-    font-size: 1.1rem;
+    font-size: 1.6rem;
     color: #fda085;
     letter-spacing: 1px;
 }}
 </style>
 <div class="circle-animate">{total_leads}</div>
-<div class="lead-label">Total Leads (last row 'Number' value)</div>
+<div class="lead-label">Total Leads</div>
 """, unsafe_allow_html=True)
 
 st.markdown("### Leads Data")
