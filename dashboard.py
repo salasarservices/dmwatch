@@ -19,74 +19,60 @@ from pymongo import MongoClient
 # LOGIN FUNCTION
 # =========================
 
-# --- Add custom CSS for the login fields ---
+# Apply new CSS style for the input fields
 st.markdown("""
 <style>
-/* From Uiverse.io by AmIt-DasIT */
-.login-container {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  align-items: flex-start;
-  margin-left: 10px;
-  margin-top: 18px;
-}
-
-.container {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
+/* From Uiverse.io by VijinV */
+.inputbox {
   position: relative;
-  color: white;
+  width: 196px;
+  margin-bottom: 24px;
 }
-
-.container .label {
-  font-size: 15px;
-  padding-left: 10px;
-  position: absolute;
-  top: 13px;
-  transition: 0.3s;
-  pointer-events: none;
-  color: #fff;
-}
-
-.input {
-  width: 250px;
-  height: 45px;
-  border: none;
+.inputbox input {
+  position: relative;
+  width: 100%;
+  padding: 20px 10px 10px;
+  background: transparent;
   outline: none;
-  padding: 0px 7px;
-  border-radius: 6px;
-  color: #fff;
-  font-size: 15px;
-  background-color: transparent;
-  background: rgba(0,0,0,0.3);
-  box-shadow: 3px 3px 10px rgba(0,0,0,1),
-  -1px -1px 6px rgba(255, 255, 255, 0.4);
+  box-shadow: none;
+  border: none;
+  color: #23242a;
+  font-size: 1em;
+  letter-spacing: 0.05em;
+  transition: 0.5s;
+  z-index: 10;
 }
-
-.input:focus {
-  border: 2px solid transparent;
-  color: #fff;
-  box-shadow: 3px 3px 10px rgba(0,0,0,1),
-  -1px -1px 6px rgba(255, 255, 255, 0.4),
-  inset 3px 3px 10px rgba(0,0,0,1),
-  inset -1px -1px 6px rgba(255, 255, 255, 0.4);
+.inputbox span {
+  position: absolute;
+  left: 0;
+  padding: 20px 10px 10px;
+  font-size: 1em;
+  color: #8f8f8f;
+  letter-spacing: 00.05em;
+  transition: 0.5s;
+  pointer-events: none;
 }
-
-.container .input:valid ~ .label,
-.container .input:focus ~ .label {
-  transition: 0.3s;
-  padding-left: 2px;
-  transform: translateY(-35px);
+.inputbox input:valid ~span,
+.inputbox input:focus ~span {
+  color: #45f3ff;
+  transform: translateX(-10px) translateY(-34px);
+  font-size: 0.75em;
 }
-
-.container .input:valid,
-.container .input:focus {
-  box-shadow: 3px 3px 10px rgba(0,0,0,1),
-  -1px -1px 6px rgba(255, 255, 255, 0.4),
-  inset 3px 3px 10px rgba(0,0,0,1),
-  inset -1px -1px 6px rgba(255, 255, 255, 0.4);
+.inputbox i {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background: #45f3ff;
+  border-radius: 4px;
+  transition: 0.5s;
+  pointer-events: none;
+  z-index: 9;
+}
+.inputbox input:valid ~i,
+.inputbox input:focus ~i {
+  height: 44px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -95,29 +81,27 @@ USERNAME = st.secrets["login"]["username"]
 PASSWORD = st.secrets["login"]["password"]
 
 def login():
-    st.markdown("<h2 style='color:white;'>Login</h2>", unsafe_allow_html=True)
-    st.markdown("<div class='login-container'>", unsafe_allow_html=True)
-
-    # Username field
-    st.markdown("""
-    <div class="container">
-        <input id="username" name="username" class="input" type="text" required autocomplete="username"
-            value="" placeholder=" " />
-        <label for="username" class="label">Username</label>
-    </div>
-    """, unsafe_allow_html=True)
-    # Password field
-    st.markdown("""
-    <div class="container">
-        <input id="password" name="password" class="input" type="password" required autocomplete="current-password"
-            value="" placeholder=" " />
-        <label for="password" class="label">Password</label>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Get values from JS (requires Streamlit components or st.text_input fallback)
-    username = st.text_input("", key="username_native", label_visibility="collapsed", placeholder="Username")
-    password = st.text_input("", key="password_native", label_visibility="collapsed", type="password", placeholder="Password")
+    st.markdown("<h2 style='color:#23242a;'>Login</h2>", unsafe_allow_html=True)
+    # Render custom input boxes with Streamlit's input widgets
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        username = st.text_input("Username", key="username_native", label_visibility="collapsed", placeholder="")
+        st.markdown("""
+        <div class="inputbox">
+            <input type="text" value="{0}" required/>
+            <span>Username</span>
+            <i></i>
+        </div>
+        """.format(username), unsafe_allow_html=True)
+    with col2:
+        password = st.text_input("Password", type="password", key="password_native", label_visibility="collapsed", placeholder="")
+        st.markdown("""
+        <div class="inputbox">
+            <input type="password" value="{0}" required/>
+            <span>Password</span>
+            <i></i>
+        </div>
+        """.format(password), unsafe_allow_html=True)
 
     login_btn = st.button("Login")
     if login_btn:
@@ -128,16 +112,12 @@ def login():
         else:
             st.error("Invalid username or password.")
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
 
 if not st.session_state["logged_in"]:
     login()
     st.stop()
-# ...rest of your app...
-
 # =========================
 # PAGE CONFIG & STYLES
 # =========================
