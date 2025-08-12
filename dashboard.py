@@ -16,18 +16,19 @@ import json
 from pymongo import MongoClient
 
 # --- Simple login credentials (store securely for real apps!) ---
-USERNAME = "admin"
-PASSWORD = "yourpassword"
+USERNAME = st.secrets["login"]["username"]
+PASSWORD = st.secrets["login"]["password"]
 
 def login():
     st.markdown("<h2>Login</h2>", unsafe_allow_html=True)
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
-    if st.button("Login"):
+    login_btn = st.button("Login")
+    if login_btn:
         if username == USERNAME and password == PASSWORD:
             st.session_state["logged_in"] = True
             st.success("Login successful!")
-            st.experimental_rerun()
+            st.rerun()
         else:
             st.error("Invalid username or password.")
 
@@ -37,6 +38,7 @@ if "logged_in" not in st.session_state:
 if not st.session_state["logged_in"]:
     login()
     st.stop()
+# ...rest of your app...
 
 # =========================
 # PAGE CONFIG & STYLES
