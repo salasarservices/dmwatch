@@ -839,70 +839,120 @@ def lead_status_colored(status):
     color = colors.get(status_clean, "#666")
     return f"<b style='color: {color};'>{status_clean}</b>"
 
+# ========== MAIN DASHBOARD ==========
 st.markdown("## Leads Dashboard")
 
 leads = get_leads_from_mongodb()
 
-# --- Total Leads Logic: LAST ROW's "Number" field ---
-if leads and "Number" in leads[-1]:
-    try:
-        total_leads = int(leads[-1]["Number"])
-    except Exception:
-        total_leads = 0
-else:
-    total_leads = 0
+# --- Lead Totals Calculation ---
+def clean_status(status):
+    return str(status).strip().replace('\n', '').replace('\r', '')
 
-# --- Animated Circle for Total Leads ---
-st.markdown(f"""
+if leads:
+    df = pd.DataFrame(leads)
+    if "Lead Status" in df.columns:
+        df["Lead Status Clean"] = df["Lead Status"].astype(str).str.strip().str.replace('\n', '', regex=False).str.replace('\r', '', regex=False)
+        interested_count = (df["Lead Status Clean"] == "Interested").sum()
+        not_interested_count = (df["Lead Status Clean"] == "Not Interested").sum()
+        closed_count = (df["Lead Status Clean"] == "Closed").sum()
+    else:
+        interested_count = not_interested_count = closed_count = 0
+
+    # Total leads logic: LAST ROW's "Number" field
+    if "Number" in df.columns and not df.empty:
+        try:
+            total_leads = int(df.iloc[-1]["Number"])
+        except Exception:
+            total_leads = len(df)
+    else:
+        total_leads = len(df)
+else:
+    df = pd.DataFrame()
+    total_leads = interested_count = not_interested_count = closed_count = 0
+
+# --- Circles Display Row ---
+st.markdown("""
 <style>
-.circle-animate {{
-    margin: 0 auto;
+.circles-row {
+    display: flex;
+    justify-content: center;
+    gap: 42px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+.circle-animate {
     width: 110px;
     height: 110px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 2.2rem;
     color: #fff;
     font-weight: bold;
-    animation: pop 1s ease;
     box-shadow: 0 4px 16px rgba(250, 190, 88, 0.3);
-}}
-@keyframes pop {{
-    0% {{ transform: scale(0.5);}}
-    80% {{ transform: scale(1.1);}}
-    100% {{ transform: scale(1);}}
-}}
-.lead-label {{
+    animation: pop 1s ease;
+    margin-bottom: 6px;
+}
+.circle-leads    { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);}
+.circle-int      { background: linear-gradient(135deg, #FFD700 0%, #FFB200 100%);}
+.circle-notint   { background: linear-gradient(135deg, #FB4141 0%, #C91F1F 100%);}
+.circle-closed   { background: linear-gradient(135deg, #B4E50D 0%, #7BA304 100%);}
+.lead-label {
     text-align:center; 
-    margin-top: 10px; 
     font-weight:600;
-    font-size: 1.6rem;
-    color: #fda085;
+    font-size: 1.1rem;
+    color: #888;
     letter-spacing: 1px;
-}}
+    margin-bottom: 0.7rem;
+}
+@keyframes pop {
+    0% { transform: scale(0.5);}
+    80% { transform: scale(1.1);}
+    100% { transform: scale(1);}
+}
 </style>
-<div class="circle-animate">{total_leads}</div>
-<div class="lead-label">Total Leads</div>
-""", unsafe_allow_html=True)
+<div class="circles-row">
+    <div>
+        <div class="circle-animate circle-leads">{total_leads}</div>
+        <div class="lead-label">Total Leads</div>
+    </div>
+    <div>
+        <div class="circle-animate circle-int">{interested_count}</div>
+        <div class="lead-label">Interested</div>
+    </div>
+    <div>
+        <div class="circle-animate circle-notint">{not_interested_count}</div>
+        <div class="lead-label">Not Interested</div>
+    </div>
+    <div>
+        <div class="circle-animate circle-closed">{closed_count}</div>
+        <div class="lead-label">Closed</div>
+    </div>
+</div>
+""".format(
+    total_leads=total_leads,
+    interested_count=interested_count,
+    not_interested_count=not_interested_count,
+    closed_count=closed_count
+), unsafe_allow_html=True)
 
 st.markdown("### Leads Data")
 
-if leads:
-    df = pd.DataFrame(leads)
+if not df.empty:
     if "__Empty" in df.columns:
         df = df.rename(columns={"__Empty": "DATE"})
     if "Date" in df.columns:
         df = df.drop(columns=["Date"])
     if "DATE" in df.columns:
         df["DATE"] = df["DATE"].apply(excel_serial_to_month_year)
-    # Clean and color the Lead Status column if it exists
+    # Color the Lead Status column
     if "Lead Status" in df.columns:
         df["Lead Status"] = df["Lead Status"].astype(str).str.strip().str.replace('\n', '', regex=False).str.replace('\r', '', regex=False)
         df["Lead Status"] = df["Lead Status"].apply(lead_status_colored)
-    # Render the table with HTML (to show colored bold status)
+    # Remove helper column if exists
+    if "Lead Status Clean" in df.columns:
+        df = df.drop(columns=["Lead Status Clean"])
     st.write(
         df.to_html(escape=False, index=False),
         unsafe_allow_html=True,
