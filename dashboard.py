@@ -774,11 +774,46 @@ with col2:
 # LEADS SECTION
 # =========================
 
+# === Helper Functions ===
+
+def excel_serial_to_month_year(serial):
+    """Convert Excel serial date to Month Year format (e.g., July 2025)."""
+    try:
+        serial = int(float(serial))
+        base_date = datetime(1899, 12, 30)
+        d = base_date + timedelta(days=serial)
+        return d.strftime("%B %Y")  # "July 2025"
+    except:
+        return ""
+
+def status_circle(status):
+    """Return colored circle HTML for lead status."""
+    status = str(status).strip().lower()
+    if status == "not interested":
+        color = "#e74c3c"  # Red
+    elif status == "closed":
+        color = "#27ae60"  # Green
+    elif status == "interested":
+        color = "#f1c40f"  # Yellow
+    else:
+        color = "#bdc3c7"  # Grey (default)
+    return f'<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:{color};margin-right:6px;vertical-align:middle"></span>{status.title()}'
+
+def titlecase_except_status(row, status_col, date_col):
+    """Titlecase all string columns except status and date."""
+    return [
+        str(cell).title() if col not in [status_col, date_col] else cell
+        for col, cell in zip(row.index, row)
+    ]
+
+# === Fetch Leads from MongoDB ===
+
 def get_leads_from_mongodb():
     try:
         mongo_uri = st.secrets["mongo_uri"]
-        client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
-        db = client["sal-leads"]
+        from pymongo import MongoClient
+        client = MongoClient(mongo_uri)
+        db = client["sal-leads"]   # Make sure your DB name matches Atlas!
         leads_collection = db["leads"]
         leads = list(leads_collection.find({}, {"_id": 0}))
         client.close()
@@ -787,15 +822,122 @@ def get_leads_from_mongodb():
         st.error(f"Could not fetch leads: {e}")
         return []
 
-st.header("Leads Dashboard")
+# === Main App Code ===
 
+st.set_page_config(page_title="Leads Dashboard", layout="wide")
+st.title("Leads Dashboard")
+
+# Fetch data
 leads = get_leads_from_mongodb()
+total_leads = len(leads)
+
+# --- Animated Circle for Total Leads ---
+st.markdown("""
+<style>
+.circle-animate {
+    margin: 0 auto;
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+    color: #fff;
+    font-weight: bold;
+    animation: pop 1s ease;
+    box-shadow: 0 4px 16px rgba(250, 190, 88, 0.3);
+}
+@keyframes pop {
+    0% { transform: scale(0.5);}
+    80% { transform: scale(1.1);}
+    100% { transform: scale(1);}
+}
+.lead-label {
+    text-align:center; 
+    margin-top: 10px; 
+    font-weight:600;
+    font-size: 1.1rem;
+    color: #fda085;
+    letter-spacing: 1px;
+}
+</style>
+<div class="circle-animate">{}</div>
+<div class="lead-label">Total Leads</div>
+""".format(total_leads), unsafe_allow_html=True)
+
+st.markdown("### Leads Data")
+
 if leads:
-    st.subheader("Leads Data")
-    st.dataframe(leads)
-else:
-    st.warning("No leads data found in MongoDB.")
+    # --- DataFrame Preparation ---
+    df = pd.DataFrame(leads)
     
+    # Rename columns as per requirements
+    if "__Empty" in df.columns:
+        df = df.rename(columns={"__Empty": "DATE"})
+    if "Date" in df.columns:
+        df = df.drop(columns=["Date"])
+    
+    # Move 'DATE' column to the front if exists
+    cols = list(df.columns)
+    if "DATE" in cols:
+        cols.insert(0, cols.pop(cols.index("DATE")))
+        df = df[cols]
+
+    # Convert serial date to Month Year in DATE column
+    if "DATE" in df.columns:
+        df["DATE"] = df["DATE"].apply(excel_serial_to_month_year)
+
+    # Titlecase all text except Lead Status and DATE
+    status_col = "Lead Status" if "Lead Status" in df.columns else "LEAD STATUS"
+    date_col = "DATE"
+    df = df.apply(lambda row: titlecase_except_status(row, status_col, date_col), axis=1)
+    df = pd.DataFrame(df, columns=df.columns)  # Ensure DataFrame after apply
+
+    # UPPERCASE column headers
+    df.columns = [str(col).upper() for col in df.columns]
+
+    # Add colored icons to LEAD STATUS
+    # Find the lead status column name (could be "LEAD STATUS" or something similar)
+    status_column = [col for col in df.columns if "STATUS" in col][0]
+    df[status_column] = df[status_column].apply(status_circle)
+
+    # --- Custom Styled Table ---
+    st.markdown("""
+    <style>
+    .custom-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 8px;
+        font-size: 1rem;
+        font-family: 'Segoe UI', Arial, sans-serif;
+    }
+    .custom-table th {
+        background: #f6d365;
+        color: #333;
+        font-weight: 800;
+        padding: 10px;
+        text-transform: uppercase;
+        border-bottom: 2px solid #fda085;
+        letter-spacing: 1px;
+    }
+    .custom-table td {
+        background: #fff;
+        padding: 10px;
+        vertical-align: middle;
+        font-weight: 500;
+        border-top: 1px solid #eee;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown(
+        df.to_html(escape=False, index=False, classes="custom-table"),
+        unsafe_allow_html=True
+    )
+else:
+    st.info("No leads data found in MongoDB.")
 
 # =========================
 # SOCIAL MEDIA ANALYTICS REPORTING DASHBOARD STARTS
