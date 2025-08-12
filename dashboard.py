@@ -913,13 +913,15 @@ st.markdown("""
     background-color: #f7f1d5 !important;
     color: #5d4300 !important;
     font-weight: bold;
+    white-space: nowrap;
 }}
 .august-cell {{
     background-color: #fbe4eb !important;
     color: #871d37 !important;
     font-weight: bold;
+    white-space: nowrap;
 }}
-/* Streamlit-like Table Styling */
+/* Streamlit-like Table Styling - Adjusted for compact cells and header color */
 .leads-table-wrapper {{
     margin: 0 auto 30px auto;
     width: 98%;
@@ -932,21 +934,23 @@ st.markdown("""
     background: #fff;
     border-radius: 12px;
     overflow: hidden;
-    font-size: 1.02rem;
+    font-size: 0.97rem;
 }}
 .leads-table th {{
-    background: #f0f2f6;
-    color: #262730;
+    background: #2d448d;
+    color: #ffff;
     font-weight: 700;
-    padding: 0.7em 0.5em;
+    padding: 0.3em 0.5em;
     border-bottom: 1.5px solid #e3e6eb;
     text-align: left;
+    white-space: nowrap;
 }}
 .leads-table td {{
-    padding: 0.6em 0.5em;
+    padding: 0.25em 0.4em;
     border-bottom: 1px solid #e3e6eb;
     background: #fff;
-    vertical-align: top;
+    vertical-align: middle;
+    white-space: nowrap;
 }}
 .leads-table tr:last-child td {{
     border-bottom: none;
