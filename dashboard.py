@@ -774,92 +774,7 @@ with col2:
 # LEADS SECTION
 # =========================
 
-def excel_serial_to_month_year(serial):
-    try:
-        serial = int(float(serial))
-        base_date = datetime(1899, 12, 30)
-        d = base_date + timedelta(days=serial)
-        return d.strftime("%B %Y")
-    except:
-        return ""
-
-def status_circle(status):
-    status = str(status).strip().lower()
-    if status == "not interested":
-        color = "#e74c3c"
-    elif status == "closed":
-        color = "#27ae60"
-    elif status == "interested":
-        color = "#f1c40f"
-    else:
-        color = "#bdc3c7"
-    return f'<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:{color};margin-right:6px;vertical-align:middle"></span>{status.title()}'
-
-def titlecase_except_status(row, status_col, date_col):
-    return [
-        str(cell).title() if col not in [status_col, date_col] else cell
-        for col, cell in zip(row.index, row)
-    ]
-
-def get_leads_from_mongodb():
-    try:
-        mongo_uri = st.secrets["mongo_uri"]
-        from pymongo import MongoClient
-        client = MongoClient(mongo_uri)
-        db = client["sal-leads"]
-        leads_collection = db["leads"]
-        leads = list(leads_collection.find({}, {"_id": 0}))
-        client.close()
-        return leads
-    except Exception as e:
-        st.error(f"Could not fetch leads: {e}")
-        return []
-
-st.set_page_config(page_title="Leads Dashboard", layout="wide")
-st.title("Leads Dashboard")
-
-leads = get_leads_from_mongodb()
-
-# --- Total Leads Logic: SUM of all "Number" fields ---
-total_leads = sum(int(lead["Number"]) for lead in leads if "Number" in lead and str(lead["Number"]).isdigit())
-
-# --- Animated Circle for Total Leads ---
-st.markdown(f"""
-<style>
-.circle-animate {{
-    margin: 0 auto;
-    width: 110px;
-    height: 110px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.2rem;
-    color: #fff;
-    font-weight: bold;
-    animation: pop 1s ease;
-    box-shadow: 0 4px 16px rgba(250, 190, 88, 0.3);
-}}
-@keyframes pop {{
-    0% {{ transform: scale(0.5);}}
-    80% {{ transform: scale(1.1);}}
-    100% {{ transform: scale(1);}}
-}}
-.lead-label {{
-    text-align:center; 
-    margin-top: 10px; 
-    font-weight:600;
-    font-size: 1.1rem;
-    color: #fda085;
-    letter-spacing: 1px;
-}}
-</style>
-<div class="circle-animate">{total_leads}</div>
-<div class="lead-label">Total Leads (SUM of Number field)</div>
-""", unsafe_allow_html=True)
-
-st.markdown("### Leads Data")
+# ... your previous code ...
 
 if leads:
     df = pd.DataFrame(leads)
@@ -875,7 +790,7 @@ if leads:
         df["DATE"] = df["DATE"].apply(excel_serial_to_month_year)
     status_col = "Lead Status" if "Lead Status" in df.columns else "LEAD STATUS"
     date_col = "DATE"
-    # Fix: .apply returns a DataFrame, so don't try to re-wrap as DataFrame!
+    # FIX: Use result_type='expand' and do NOT rewrap with pd.DataFrame
     df = df.apply(lambda row: titlecase_except_status(row, status_col, date_col), axis=1, result_type='expand')
     df.columns = [str(col).upper() for col in df.columns]
     status_column = [col for col in df.columns if "STATUS" in col][0]
