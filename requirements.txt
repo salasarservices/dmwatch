@@ -10,4 +10,5 @@ requests
 Pillow
 pycountry
 gspread
-pymongo
+pymongo>=4.0.0
+dnspython>=2.0.0
