@@ -14,68 +14,53 @@ from PIL import Image
 import pycountry
 import json
 from pymongo import MongoClient
+from streamlit_js_eval import streamlit_js_eval
 
 # =========================
 # LOGIN FUNCTION
 # =========================
 
-import streamlit as st
-
-# Apply your custom CSS to Streamlit's input fields
 st.markdown("""
 <style>
-/* From Uiverse.io by VijinV */
-div[data-testid="stTextInput"] {
+/* mean-goose-92 from Uiverse.io by VijinV */
+.inputbox {
   position: relative;
-  width: 196px;
-  margin-bottom: 24px;
+  width: 240px;
+  margin-bottom: 32px;
 }
-div[data-testid="stTextInput"] > div > input {
-  position: relative;
+.inputbox input {
   width: 100%;
   padding: 20px 10px 10px;
   background: transparent;
+  border: 1.5px solid #ddd;
+  border-radius: 10px;
   outline: none;
-  box-shadow: none;
-  border: none;
   color: #23242a;
   font-size: 1em;
   letter-spacing: 0.05em;
   transition: 0.5s;
   z-index: 10;
 }
-div[data-testid="stTextInput"] label {
+.inputbox input:focus, .inputbox input:valid {
+  border: 1.5px solid #45f3ff;
+}
+.inputbox span {
   position: absolute;
-  left: 0;
-  padding: 20px 10px 10px;
+  left: 10px;
+  top: 18px;
   font-size: 1em;
   color: #8f8f8f;
-  letter-spacing: 00.05em;
-  transition: 0.5s;
+  letter-spacing: 0.05em;
   pointer-events: none;
-  top: 0;
+  transition: 0.5s;
 }
-div[data-testid="stTextInput"] > div > input:focus + label,
-div[data-testid="stTextInput"] > div > input:not(:placeholder-shown) + label {
+.inputbox input:focus ~ span, 
+.inputbox input:valid ~ span {
   color: #45f3ff;
-  transform: translateX(-10px) translateY(-34px);
-  font-size: 0.75em;
-}
-div[data-testid="stTextInput"] i {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 2px;
-  background: #45f3ff;
-  border-radius: 4px;
-  transition: 0.5s;
-  pointer-events: none;
-  z-index: 9;
-}
-div[data-testid="stTextInput"] > div > input:focus ~ i,
-div[data-testid="stTextInput"] > div > input:not(:placeholder-shown) ~ i {
-  height: 44px;
+  transform: translateX(-5px) translateY(-32px);
+  font-size: 0.85em;
+  background: #fff;
+  padding: 0 4px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -85,13 +70,34 @@ PASSWORD = st.secrets["login"]["password"]
 
 def login():
     st.markdown("<h2 style='color:#23242a;'>Login</h2>", unsafe_allow_html=True)
-    col1, col2 = st.columns([1, 1])
-    with col1:
-        username = st.text_input("Username", key="username_native")
-    with col2:
-        password = st.text_input("Password", type="password", key="password_native")
-    login_btn = st.button("Login")
-    if login_btn:
+    st.markdown("""
+    <form id="login-form">
+      <div class="inputbox">
+        <input id="username" name="username" type="text" autocomplete="username" required>
+        <span>Username</span>
+      </div>
+      <div class="inputbox">
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+        <span>Password</span>
+      </div>
+      <button type="button" onclick="window.submitLogin()">Login</button>
+    </form>
+    <script>
+      window.submitLogin = function() {
+        const u = document.getElementById('username').value;
+        const p = document.getElementById('password').value;
+        window.parent.postMessage({isStreamlitMessage: true, type: 'streamlit:setComponentValue', value: {username: u, password: p}}, '*');
+      }
+    </script>
+    """, unsafe_allow_html=True)
+
+    # Use streamlit-js-eval to capture form data from JS
+    result = streamlit_js_eval(js_expressions="value", key="login-capture")
+    login_data = result.get("value", {})
+    username = login_data.get("username", "")
+    password = login_data.get("password", "")
+
+    if username and password:
         if username == USERNAME and password == PASSWORD:
             st.session_state["logged_in"] = True
             st.success("Login successful!")
