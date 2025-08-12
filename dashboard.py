@@ -801,9 +801,9 @@ with col2:
     st.subheader('Traffic Acquisition by Channel')
     render_table(traf_df)
 
-# =========================
-# LEADS SECTION
-# =========================
+import streamlit as st
+import pandas as pd
+from datetime import datetime, timedelta
 
 def excel_serial_to_month_year(serial):
     try:
@@ -828,7 +828,6 @@ def get_leads_from_mongodb():
         st.error(f"Could not fetch leads: {e}")
         return []
 
-# Function to color and bold the lead status text
 def lead_status_colored(status):
     status_clean = str(status).strip().replace('\n', '').replace('\r', '')
     colors = {
@@ -839,12 +838,10 @@ def lead_status_colored(status):
     color = colors.get(status_clean, "#666")
     return f"<b style='color: {color};'>{status_clean}</b>"
 
-# ========== MAIN DASHBOARD ==========
 st.markdown("## Leads Dashboard")
 
 leads = get_leads_from_mongodb()
 
-# --- Lead Totals Calculation ---
 if leads:
     df = pd.DataFrame(leads)
     if "Lead Status" in df.columns:
@@ -855,7 +852,6 @@ if leads:
     else:
         interested_count = not_interested_count = closed_count = 0
 
-    # Total leads logic: LAST ROW's "Number" field
     if "Number" in df.columns and not df.empty:
         try:
             total_leads = int(df.iloc[-1]["Number"])
@@ -867,17 +863,16 @@ else:
     df = pd.DataFrame()
     total_leads = interested_count = not_interested_count = closed_count = 0
 
-# --- Circles Display Row ---
 st.markdown("""
 <style>
-.circles-row {{
+.circles-row {
     display: flex;
     justify-content: center;
     gap: 42px;
     margin-bottom: 30px;
     flex-wrap: wrap;
-}}
-.circle-animate {{
+}
+.circle-animate {
     width: 110px;
     height: 110px;
     border-radius: 50%;
@@ -891,72 +886,74 @@ st.markdown("""
     animation: pop 1s ease;
     margin-bottom: 6px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-}}
-.circle-animate:hover {{
+}
+.circle-animate:hover {
     transform: scale(1.10);
     box-shadow: 0 8px 32px rgba(250, 190, 88, 0.4);
-}}
-.circle-leads    {{ background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);}}
-.circle-int      {{ background: linear-gradient(135deg, #FFD700 0%, #FFB200 100%);}}
-.circle-notint   {{ background: linear-gradient(135deg, #FB4141 0%, #C91F1F 100%);}}
-.circle-closed   {{ background: linear-gradient(135deg, #B4E50D 0%, #7BA304 100%);}}
-.lead-label {{
+}
+.circle-leads    { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);}
+.circle-int      { background: linear-gradient(135deg, #FFD700 0%, #FFB200 100%);}
+.circle-notint   { background: linear-gradient(135deg, #FB4141 0%, #C91F1F 100%);}
+.circle-closed   { background: linear-gradient(135deg, #B4E50D 0%, #7BA304 100%);}
+.lead-label {
     text-align:center; 
     font-weight:600;
     font-size: 1.1rem;
     color: #888;
     letter-spacing: 1px;
     margin-bottom: 0.7rem;
-}}
-@keyframes pop {{
-    0% {{ transform: scale(0.5);}}
-    80% {{ transform: scale(1.1);}}
-    100% {{ transform: scale(1);}}
-}}
+}
+@keyframes pop {
+    0% { transform: scale(0.5);}
+    80% { transform: scale(1.1);}
+    100% { transform: scale(1);}
+}
 /* Date column coloring */
-.july-cell {{
-    background-color: #ffe9a7 !important;
+.july-cell {
+    background-color: #f7f1d5 !important;
     color: #5d4300 !important;
     font-weight: bold;
-}}
-.august-cell {{
-    background-color: #ffd7df !important;
+}
+.august-cell {
+    background-color: #fbe4eb !important;
     color: #871d37 !important;
     font-weight: bold;
-}}
-/* Leads Data Table Styling */
-.leads-table-wrapper {{
+}
+/* Streamlit-like Table Styling */
+.leads-table-wrapper {
     margin: 0 auto 30px auto;
     width: 98%;
     overflow-x: auto;
-}}
-.leads-table {{
-    border-collapse: separate;
-    border-spacing: 0;
+    font-family: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+}
+.leads-table {
+    border-collapse: collapse;
     width: 100%;
     background: #fff;
-    border-radius: 16px;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 2px 12px rgba(250,190,88,0.12);
-    font-size: 1.07rem;
-}}
-.leads-table th {{
-    background: linear-gradient(135deg, #fad961 0%, #f76b1c 100%);
-    color: #fff;
+    font-size: 1.02rem;
+}
+.leads-table th {
+    background: #f0f2f6;
+    color: #262730;
     font-weight: 700;
-    padding: 16px 8px;
-    border-bottom: 2px solid #fda085;
+    padding: 0.7em 0.5em;
+    border-bottom: 1.5px solid #e3e6eb;
     text-align: left;
-}}
-.leads-table td {{
-    padding: 12px 8px;
-    border-bottom: 1px solid #f6d36533;
+}
+.leads-table td {
+    padding: 0.6em 0.5em;
+    border-bottom: 1px solid #e3e6eb;
     background: #fff;
     vertical-align: top;
-}}
-.leads-table tr:last-child td {{
+}
+.leads-table tr:last-child td {
     border-bottom: none;
-}}
+}
+.leads-table tr:nth-child(even) td:not(.july-cell):not(.august-cell) {
+    background: #f8f9fb;
+}
 </style>
 <div class="circles-row">
     <div>
@@ -985,7 +982,6 @@ st.markdown("""
 
 st.markdown("### Leads Data")
 
-# ======= ADD DATE COLUMN BEFORE NUMBER, COLOR IT, AND SHOW TABLE =======
 if not df.empty:
     # Insert Date column before Number, but drop if already exists
     if "Number" in df.columns:
@@ -1027,7 +1023,6 @@ if not df.empty:
         else:
             return ""
 
-    # Build HTML table with colored Date column and styled as dashboard
     def df_to_colored_html(df):
         headers = df.columns.tolist()
         html = '<div class="leads-table-wrapper"><table class="leads-table">\n<thead><tr>'
@@ -1051,6 +1046,7 @@ if not df.empty:
     )
 else:
     st.info("No leads data found in MongoDB.")
+    
 # =========================
 # SOCIAL MEDIA ANALYTICS REPORTING DASHBOARD STARTS
 # =========================
