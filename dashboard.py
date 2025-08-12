@@ -801,9 +801,9 @@ with col2:
     st.subheader('Traffic Acquisition by Channel')
     render_table(traf_df)
 
-import streamlit as st
-import pandas as pd
-from datetime import datetime, timedelta
+# =========================
+# LEADS SECTION
+# =========================
 
 def excel_serial_to_month_year(serial):
     try:
@@ -830,13 +830,13 @@ def get_leads_from_mongodb():
 
 def lead_status_colored(status):
     status_clean = str(status).strip().replace('\n', '').replace('\r', '')
-    colors = {
+    colors = {{
         "Interested": "#FFD700",
         "Not Interested": "#FB4141",
         "Closed": "#B4E50D"
-    }
+    }}
     color = colors.get(status_clean, "#666")
-    return f"<b style='color: {color};'>{status_clean}</b>"
+    return f"<b style='color: {{color}};'>{{status_clean}}</b>"
 
 st.markdown("## Leads Dashboard")
 
@@ -865,14 +865,14 @@ else:
 
 st.markdown("""
 <style>
-.circles-row {
+.circles-row {{
     display: flex;
     justify-content: center;
     gap: 42px;
     margin-bottom: 30px;
     flex-wrap: wrap;
-}
-.circle-animate {
+}}
+.circle-animate {{
     width: 110px;
     height: 110px;
     border-radius: 50%;
@@ -886,74 +886,74 @@ st.markdown("""
     animation: pop 1s ease;
     margin-bottom: 6px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.circle-animate:hover {
+}}
+.circle-animate:hover {{
     transform: scale(1.10);
     box-shadow: 0 8px 32px rgba(250, 190, 88, 0.4);
-}
-.circle-leads    { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);}
-.circle-int      { background: linear-gradient(135deg, #FFD700 0%, #FFB200 100%);}
-.circle-notint   { background: linear-gradient(135deg, #FB4141 0%, #C91F1F 100%);}
-.circle-closed   { background: linear-gradient(135deg, #B4E50D 0%, #7BA304 100%);}
-.lead-label {
+}}
+.circle-leads    {{ background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);}}
+.circle-int      {{ background: linear-gradient(135deg, #FFD700 0%, #FFB200 100%);}}
+.circle-notint   {{ background: linear-gradient(135deg, #FB4141 0%, #C91F1F 100%);}}
+.circle-closed   {{ background: linear-gradient(135deg, #B4E50D 0%, #7BA304 100%);}}
+.lead-label {{
     text-align:center; 
     font-weight:600;
     font-size: 1.1rem;
     color: #888;
     letter-spacing: 1px;
     margin-bottom: 0.7rem;
-}
-@keyframes pop {
-    0% { transform: scale(0.5);}
-    80% { transform: scale(1.1);}
-    100% { transform: scale(1);}
-}
+}}
+@keyframes pop {{
+    0% {{ transform: scale(0.5);}}
+    80% {{ transform: scale(1.1);}}
+    100% {{ transform: scale(1);}}
+}}
 /* Date column coloring */
-.july-cell {
+.july-cell {{
     background-color: #f7f1d5 !important;
     color: #5d4300 !important;
     font-weight: bold;
-}
-.august-cell {
+}}
+.august-cell {{
     background-color: #fbe4eb !important;
     color: #871d37 !important;
     font-weight: bold;
-}
+}}
 /* Streamlit-like Table Styling */
-.leads-table-wrapper {
+.leads-table-wrapper {{
     margin: 0 auto 30px auto;
     width: 98%;
     overflow-x: auto;
     font-family: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
-}
-.leads-table {
+}}
+.leads-table {{
     border-collapse: collapse;
     width: 100%;
     background: #fff;
     border-radius: 12px;
     overflow: hidden;
     font-size: 1.02rem;
-}
-.leads-table th {
+}}
+.leads-table th {{
     background: #f0f2f6;
     color: #262730;
     font-weight: 700;
     padding: 0.7em 0.5em;
     border-bottom: 1.5px solid #e3e6eb;
     text-align: left;
-}
-.leads-table td {
+}}
+.leads-table td {{
     padding: 0.6em 0.5em;
     border-bottom: 1px solid #e3e6eb;
     background: #fff;
     vertical-align: top;
-}
-.leads-table tr:last-child td {
+}}
+.leads-table tr:last-child td {{
     border-bottom: none;
-}
-.leads-table tr:nth-child(even) td:not(.july-cell):not(.august-cell) {
+}}
+.leads-table tr:nth-child(even) td:not(.july-cell):not(.august-cell) {{
     background: #f8f9fb;
-}
+}}
 </style>
 <div class="circles-row">
     <div>
