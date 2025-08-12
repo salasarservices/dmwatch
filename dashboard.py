@@ -913,6 +913,50 @@ st.markdown("""
     80% {{ transform: scale(1.1);}}
     100% {{ transform: scale(1);}}
 }}
+/* Date column coloring */
+.july-cell {{
+    background-color: #ffe9a7 !important;
+    color: #5d4300 !important;
+    font-weight: bold;
+}}
+.august-cell {{
+    background-color: #ffd7df !important;
+    color: #871d37 !important;
+    font-weight: bold;
+}}
+/* Leads Data Table Styling */
+.leads-table-wrapper {{
+    margin: 0 auto 30px auto;
+    width: 98%;
+    overflow-x: auto;
+}}
+.leads-table {{
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(250,190,88,0.12);
+    font-size: 1.07rem;
+}}
+.leads-table th {{
+    background: linear-gradient(135deg, #fad961 0%, #f76b1c 100%);
+    color: #fff;
+    font-weight: 700;
+    padding: 16px 8px;
+    border-bottom: 2px solid #fda085;
+    text-align: left;
+}}
+.leads-table td {{
+    padding: 12px 8px;
+    border-bottom: 1px solid #f6d36533;
+    background: #fff;
+    vertical-align: top;
+}}
+.leads-table tr:last-child td {{
+    border-bottom: none;
+}}
 </style>
 <div class="circles-row">
     <div>
@@ -941,13 +985,27 @@ st.markdown("""
 
 st.markdown("### Leads Data")
 
+# ======= ADD DATE COLUMN BEFORE NUMBER, COLOR IT, AND SHOW TABLE =======
 if not df.empty:
-    if "__Empty" in df.columns:
-        df = df.rename(columns={"__Empty": "DATE"})
-    if "Date" in df.columns:
-        df = df.drop(columns=["Date"])
-    if "DATE" in df.columns:
-        df["DATE"] = df["DATE"].apply(excel_serial_to_month_year)
+    # Insert Date column before Number
+    if "Number" in df.columns:
+        date_column = []
+        for i in range(len(df)):
+            num = int(df.iloc[i]["Number"]) if "Number" in df.columns and str(df.iloc[i]["Number"]).isdigit() else None
+            if num is not None:
+                if 1 <= num <= 7:
+                    date_column.append("July 2025")
+                elif 8 <= num <= 10:
+                    date_column.append("August 2025")
+                else:
+                    date_column.append("")
+            else:
+                date_column.append("")
+        insert_at = list(df.columns).index("Number")
+        df.insert(insert_at, "Date", date_column)
+    else:
+        df.insert(0, "Date", "")
+
     # Color the Lead Status column
     if "Lead Status" in df.columns:
         df["Lead Status"] = df["Lead Status"].astype(str).str.strip().str.replace('\n', '', regex=False).str.replace('\r', '', regex=False)
@@ -955,8 +1013,36 @@ if not df.empty:
     # Remove helper column if exists
     if "Lead Status Clean" in df.columns:
         df = df.drop(columns=["Lead Status Clean"])
+
+    # Color the Date column using HTML/CSS
+    def color_month_cell(month):
+        if month == "July 2025":
+            return 'class="july-cell"'
+        elif month == "August 2025":
+            return 'class="august-cell"'
+        else:
+            return ""
+
+    # Build HTML table with colored Date column and styled as dashboard
+    def df_to_colored_html(df):
+        headers = df.columns.tolist()
+        html = '<div class="leads-table-wrapper"><table class="leads-table">\n<thead><tr>'
+        for h in headers:
+            html += f'<th>{h}</th>'
+        html += '</tr></thead>\n<tbody>'
+        for idx, row in df.iterrows():
+            html += '<tr>'
+            for i, cell in enumerate(row):
+                if headers[i] == "Date":
+                    html += f'<td {color_month_cell(cell)}>{cell}</td>'
+                else:
+                    html += f'<td>{cell}</td>'
+            html += '</tr>'
+        html += '</tbody></table></div>'
+        return html
+
     st.write(
-        df.to_html(escape=False, index=False),
+        df_to_colored_html(df),
         unsafe_allow_html=True,
     )
 else:
