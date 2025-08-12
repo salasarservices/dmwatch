@@ -774,10 +774,6 @@ with col2:
 # LEADS SECTION
 # =========================
 
-import streamlit as st
-import pandas as pd
-from datetime import datetime, timedelta
-
 def excel_serial_to_month_year(serial):
     try:
         serial = int(float(serial))
