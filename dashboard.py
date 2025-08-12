@@ -828,6 +828,27 @@ def get_leads_from_mongodb():
         st.error(f"Could not fetch leads: {e}")
         return []
 
+# Function to render colored circle with lead status
+def lead_status_with_icon(status):
+    color = {
+        "Not Interested": "#f44336",  # Red
+        "Closed": "#4caf50",           # Green
+        "Interested": "#ffeb3b",       # Yellow
+    }.get(status, "#bdbdbd")
+    return f"""
+        <span style='
+            display:inline-block;
+            width:12px;
+            height:12px;
+            border-radius:50%;
+            background:{color};
+            vertical-align:middle;
+            margin-right:7px;
+            border:1px solid #bbb;
+        '></span>
+        <span style='vertical-align:middle;font-size:1em'>{status}</span>
+    """
+
 st.markdown("## Leads Dashboard")
 
 leads = get_leads_from_mongodb()
@@ -887,8 +908,14 @@ if leads:
         df = df.drop(columns=["Date"])
     if "DATE" in df.columns:
         df["DATE"] = df["DATE"].apply(excel_serial_to_month_year)
-    # DO NOT re-wrap as DataFrame, just display!
-    st.dataframe(df)
+    # Add colored circles to Lead Status column if it exists
+    if "Lead Status" in df.columns:
+        df["Lead Status"] = df["Lead Status"].apply(lead_status_with_icon)
+    # Show table with HTML rendering for colored icons
+    st.write(
+        df.to_html(escape=False, index=False),
+        unsafe_allow_html=True,
+    )
 else:
     st.info("No leads data found in MongoDB.")
 # =========================
