@@ -774,6 +774,7 @@ with col2:
 # LEADS SECTION
 # =========================
 
+
 def excel_serial_to_month_year(serial):
     try:
         serial = int(float(serial))
@@ -842,7 +843,7 @@ st.markdown(f"""
 <div class="lead-label">Total Leads (SUM of Number field)</div>
 """, unsafe_allow_html=True)
 
-st.markdown("### Leads Data (Raw Table)")
+st.markdown("### Leads Data")
 
 if leads:
     df = pd.DataFrame(leads)
@@ -852,8 +853,7 @@ if leads:
         df = df.drop(columns=["Date"])
     if "DATE" in df.columns:
         df["DATE"] = df["DATE"].apply(excel_serial_to_month_year)
-    # ---- FIX: Remove any problematic DataFrame re-wrapping or .apply that would cause AttributeError ----
-    # Display as raw table
+    # DO NOT re-wrap as DataFrame, just display!
     st.dataframe(df)
 else:
     st.info("No leads data found in MongoDB.")
