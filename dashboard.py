@@ -774,6 +774,10 @@ with col2:
 # LEADS SECTION
 # =========================
 
+import streamlit as st
+import pandas as pd
+from datetime import datetime, timedelta
+
 def excel_serial_to_month_year(serial):
     try:
         serial = int(float(serial))
@@ -782,21 +786,6 @@ def excel_serial_to_month_year(serial):
         return d.strftime("%B %Y")
     except Exception:
         return ""
-
-def status_circle(status):
-    status = str(status).strip().lower()
-    if status == "not interested":
-        color = "#e74c3c"
-    elif status == "closed":
-        color = "#27ae60"
-    elif status == "interested":
-        color = "#f1c40f"
-    else:
-        color = "#bdc3c7"
-    return (
-        f'<span style="display:inline-block;width:12px;height:12px;border-radius:50%;'
-        f'background:{color};margin-right:6px;vertical-align:middle"></span>{status.title()}'
-    )
 
 def get_leads_from_mongodb():
     try:
@@ -816,12 +805,14 @@ st.set_page_config(page_title="Leads Dashboard", layout="wide")
 st.title("Leads Dashboard")
 
 leads = get_leads_from_mongodb()
+
+# --- Total Leads Logic: SUM of all "Number" fields ---
 total_leads = sum(
     int(lead["Number"]) for lead in leads if "Number" in lead and str(lead["Number"]).isdigit()
 )
 
-st.markdown(
-    f"""
+# --- Animated Circle for Total Leads ---
+st.markdown(f"""
 <style>
 .circle-animate {{
     margin: 0 auto;
@@ -854,11 +845,9 @@ st.markdown(
 </style>
 <div class="circle-animate">{total_leads}</div>
 <div class="lead-label">Total Leads (SUM of Number field)</div>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
-st.markdown("### Leads Data")
+st.markdown("### Leads Data (Raw Table)")
 
 if leads:
     df = pd.DataFrame(leads)
@@ -866,59 +855,9 @@ if leads:
         df = df.rename(columns={"__Empty": "DATE"})
     if "Date" in df.columns:
         df = df.drop(columns=["Date"])
-    cols = list(df.columns)
-    if "DATE" in cols:
-        cols.insert(0, cols.pop(cols.index("DATE")))
-        df = df[cols]
     if "DATE" in df.columns:
         df["DATE"] = df["DATE"].apply(excel_serial_to_month_year)
-    # Find status and date columns (case-insensitive)
-    status_col = next((col for col in df.columns if "STATUS" in col.upper()), None)
-    date_col = next((col for col in df.columns if "DATE" in col.upper()), None)
-    # Titlecase all string columns except status and date
-    for col in df.columns:
-        if col != status_col and col != date_col and df[col].dtype == object:
-            df[col] = df[col].astype(str).str.title()
-    # Add colored icons to status
-    if status_col:
-        df[status_col] = df[status_col].apply(status_circle)
-    # UPPERCASE column headers for display
-    df.columns = [str(col).upper() for col in df.columns]
-    # Custom styled table
-    st.markdown(
-        """
-    <style>
-    .custom-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0 8px;
-        font-size: 1rem;
-        font-family: 'Segoe UI', Arial, sans-serif;
-    }
-    .custom-table th {
-        background: #f6d365;
-        color: #333;
-        font-weight: 800;
-        padding: 10px;
-        text-transform: uppercase;
-        border-bottom: 2px solid #fda085;
-        letter-spacing: 1px;
-    }
-    .custom-table td {
-        background: #fff;
-        padding: 10px;
-        vertical-align: middle;
-        font-weight: 500;
-        border-top: 1px solid #eee;
-    }
-    </style>
-    """,
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        df.to_html(escape=False, index=False, classes="custom-table"),
-        unsafe_allow_html=True,
-    )
+    st.dataframe(df)
 else:
     st.info("No leads data found in MongoDB.")
 
