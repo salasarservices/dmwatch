@@ -774,10 +774,6 @@ with col2:
 # LEADS SECTION
 # =========================
 
-import streamlit as st
-import pandas as pd
-from datetime import datetime, timedelta
-
 # === Helper Functions ===
 
 def excel_serial_to_month_year(serial):
@@ -831,9 +827,17 @@ def get_leads_from_mongodb():
 st.set_page_config(page_title="Leads Dashboard", layout="wide")
 st.title("Leads Dashboard")
 
-# Fetch data
+# Fetch leads data
 leads = get_leads_from_mongodb()
-total_leads = len(leads)
+
+# --- Total Leads Logic: count highest "Number" (starting from 1), fallback to count of valid entries ---
+if leads and "Number" in leads[0]:
+    try:
+        total_leads = max(int(lead["Number"]) for lead in leads if "Number" in lead and str(lead["Number"]).isdigit())
+    except Exception:
+        total_leads = sum(1 for lead in leads if "Number" in lead and str(lead["Number"]).isdigit())
+else:
+    total_leads = len(leads)  # fallback if "Number" field missing
 
 # --- Animated Circle for Total Leads ---
 st.markdown("""
