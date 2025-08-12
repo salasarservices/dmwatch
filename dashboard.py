@@ -890,6 +890,11 @@ st.markdown("""
     box-shadow: 0 4px 16px rgba(250, 190, 88, 0.3);
     animation: pop 1s ease;
     margin-bottom: 6px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}}
+.circle-animate:hover {{
+    transform: scale(1.10);
+    box-shadow: 0 8px 32px rgba(250, 190, 88, 0.4);
 }}
 .circle-leads    {{ background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);}}
 .circle-int      {{ background: linear-gradient(135deg, #FFD700 0%, #FFB200 100%);}}
