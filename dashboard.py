@@ -774,10 +774,6 @@ with col2:
 # LEADS SECTION
 # =========================
 
-import streamlit as st
-import pandas as pd
-from datetime import datetime, timedelta
-
 def excel_serial_to_month_year(serial):
     try:
         serial = int(float(serial))
@@ -800,6 +796,7 @@ def status_circle(status):
     return f'<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:{color};margin-right:6px;vertical-align:middle"></span>{status.title()}'
 
 def titlecase_except_status(row, status_col, date_col):
+    # row is a Series
     return [
         str(cell).title() if col not in [status_col, date_col] else cell
         for col, cell in zip(row.index, row)
@@ -879,10 +876,12 @@ if leads:
         df["DATE"] = df["DATE"].apply(excel_serial_to_month_year)
     status_col = "Lead Status" if "Lead Status" in df.columns else "LEAD STATUS"
     date_col = "DATE"
-    # Apply titlecase transformation
+    # Apply titlecase transformation to all rows except status and date
     df = df.apply(lambda row: titlecase_except_status(row, status_col, date_col), axis=1, result_type="expand")
-    # Column names: preserve original order and names, then uppercase for display
-    df.columns = [str(col).upper() for col in leads[0].keys()]
+    # After .apply(..., result_type="expand"), df becomes a DataFrame but column names are 0,1,2,...
+    # So, set columns to original columns (uppercased) for display
+    orig_columns = list(pd.DataFrame(leads).columns)
+    df.columns = [str(col).upper() for col in orig_columns]
     # Add colored icons to status
     status_column = [col for col in df.columns if "STATUS" in col][0]
     df[status_column] = df[status_column].apply(status_circle)
