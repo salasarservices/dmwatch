@@ -20,128 +20,19 @@ from streamlit_js_eval import streamlit_js_eval
 # LOGIN FUNCTION
 # =========================
 
-# Apply your custom CSS for the login box (mean-goose-92 from Uiverse.io)
-st.markdown("""
-<style>
-.inputbox {
-  position: relative;
-  width: 240px;
-  margin-bottom: 32px;
-}
-.inputbox input {
-  width: 100%;
-  padding: 20px 10px 10px;
-  background: transparent;
-  border: 1.5px solid #ddd;
-  border-radius: 10px;
-  outline: none;
-  color: #23242a;
-  font-size: 1em;
-  letter-spacing: 0.05em;
-  transition: 0.5s;
-  z-index: 10;
-}
-.inputbox input:focus, .inputbox input:valid {
-  border: 1.5px solid #45f3ff;
-}
-.inputbox span {
-  position: absolute;
-  left: 10px;
-  top: 18px;
-  font-size: 1em;
-  color: #8f8f8f;
-  letter-spacing: 0.05em;
-  pointer-events: none;
-  transition: 0.5s;
-  background: #fff;
-  padding: 0 4px;
-}
-.inputbox input:focus ~ span, 
-.inputbox input:valid ~ span {
-  color: #45f3ff;
-  transform: translateX(-5px) translateY(-32px);
-  font-size: 0.85em;
-  background: #fff;
-  padding: 0 4px;
-}
-button.login-btn {
-  padding: 8px 18px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  font-size: 1em;
-  background: #fff;
-  color: #23242a;
-  margin-top: 10px;
-  cursor: pointer;
-  transition: border 0.2s;
-}
-button.login-btn:hover {
-  border: 1.5px solid #45f3ff;
-}
-</style>
-""", unsafe_allow_html=True)
+import streamlit as st
 
 USERNAME = st.secrets["login"]["username"]
 PASSWORD = st.secrets["login"]["password"]
 
 def login():
-    st.markdown("<h2 style='color:#23242a;'>Login</h2>", unsafe_allow_html=True)
+    st.title("Login")
+    with st.form("login_form"):
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        submitted = st.form_submit_button("Login")
 
-    # Use Streamlit's form for handling submit
-    with st.form("login_form", clear_on_submit=False):
-        st.markdown("""
-        <div class="inputbox">
-            <input id="username" name="username" type="text" required maxlength="100" autocomplete="username" placeholder="" />
-            <span>Username</span>
-        </div>
-        <div class="inputbox">
-            <input id="password" name="password" type="password" required maxlength="100" autocomplete="current-password" placeholder="" />
-            <span>Password</span>
-        </div>
-        """, unsafe_allow_html=True)
-
-        submitted = st.form_submit_button("Login", use_container_width=False)
-
-        # JavaScript to copy the input values into Streamlit's session state when button is clicked
-        st.markdown("""
-        <script>
-        // When the login button is clicked, set values in Streamlit
-        const form = window.parent.document.querySelector('form[action^="/"]');
-        if (form) {
-          form.onsubmit = function() {
-            const username = document.getElementById("username").value;
-            const password = document.getElementById("password").value;
-            window.parent.postMessage(
-              {
-                isStreamlitMessage: true,
-                type: "streamlit:setComponentValue",
-                key: "custom_login_data",
-                value: {username: username, password: password}
-              }, "*"
-            );
-          }
-        }
-        </script>
-        """, unsafe_allow_html=True)
-
-    # Listen for JS values and use Session State to bridge the values
-    login_data = st.session_state.get("custom_login_data", {})
-
-    username = login_data.get("username", "")
-    password = login_data.get("password", "")
-
-    # Fallback: if JS not working, allow manual input for dev/test
-    if not username:
-        username = st.text_input("Username", key="username_native", label_visibility="collapsed", placeholder="Type username")
-    if not password:
-        password = st.text_input("Password", key="password_native", label_visibility="collapsed", type="password", placeholder="Type password")
-
-    # Only check credentials if either:
-    # 1. JS-based form submit, or
-    # 2. Fallback Streamlit form is used
-    if (submitted or username or password):
-        # Only check if both fields are filled
-        if username and password:
+        if submitted:
             if username == USERNAME and password == PASSWORD:
                 st.session_state["logged_in"] = True
                 st.success("Login successful!")
