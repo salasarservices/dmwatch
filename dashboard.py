@@ -797,8 +797,7 @@ def get_leads_from_mongodb():
         st.error(f"Could not fetch leads: {e}")
         return []
 
-st.set_page_config(page_title="Leads Dashboard", layout="wide")
-st.title("Leads Dashboard")
+st.markdown("## Leads Dashboard")
 
 leads = get_leads_from_mongodb()
 
@@ -853,10 +852,11 @@ if leads:
         df = df.drop(columns=["Date"])
     if "DATE" in df.columns:
         df["DATE"] = df["DATE"].apply(excel_serial_to_month_year)
+    # ---- FIX: Remove any problematic DataFrame re-wrapping or .apply that would cause AttributeError ----
+    # Display as raw table
     st.dataframe(df)
 else:
     st.info("No leads data found in MongoDB.")
-
 # =========================
 # SOCIAL MEDIA ANALYTICS REPORTING DASHBOARD STARTS
 # =========================
