@@ -1244,8 +1244,11 @@ def get_insight(metric, since, until):
         resp = requests.get(url, params=params).json()
         if "data" in resp and len(resp["data"]) > 0 and "values" in resp["data"][0]:
             return resp['data'][0]['values'][-1]['value']
+        else:
+            print(f"[DEBUG] No data for metric {metric}. Response: {resp}")
         return 0
-    except Exception:
+    except Exception as e:
+        print(f"[ERROR] Exception in get_insight: {e}")
         return 0
 
 def get_posts(since, until):
@@ -1264,9 +1267,10 @@ def get_posts(since, until):
             paging = resp.get('paging', {})
             url = paging.get('next') if 'next' in paging else None
             params = {}
-    except Exception:
+        return posts
+    except Exception as e:
+        print(f"[ERROR] Exception in get_posts: {e}")
         return []
-    return posts
 
 def safe_percent(prev, cur):
     if prev == 0 and cur == 0:
@@ -1291,14 +1295,25 @@ def get_post_likes(post_id, access_token):
     try:
         resp = requests.get(url).json()
         return resp.get('likes', {}).get('summary', {}).get('total_count', 0)
-    except Exception:
+    except Exception as e:
+        print(f"[ERROR] Exception in get_post_likes: {e}")
         return 0
 
+# PATCH: Use YYYY-MM-DD for since/until (not isoformat)
 fb_cur_start, fb_cur_end = sd, ed + timedelta(days=1)
 fb_prev_start, fb_prev_end = psd, ped + timedelta(days=1)
 
-fb_cur_since, fb_cur_until = fb_cur_start.isoformat(), fb_cur_end.isoformat()
-fb_prev_since, fb_prev_until = fb_prev_start.isoformat(), fb_prev_end.isoformat()
+fb_cur_since, fb_cur_until = fb_cur_start.strftime('%Y-%m-%d'), fb_cur_end.strftime('%Y-%m-%d')
+fb_prev_since, fb_prev_until = fb_prev_start.strftime('%Y-%m-%d'), fb_prev_end.strftime('%Y-%m-%d')
+
+def test_page_access():
+    url = f"https://graph.facebook.com/v19.0/{PAGE_ID}"
+    params = {"access_token": ACCESS_TOKEN, "fields": "name"}
+    resp = requests.get(url, params=params).json()
+    print("[DEBUG] Page info:", resp)
+
+# Uncomment this line to debug your access (optional)
+# test_page_access()
 
 cur_impressions = get_insight("page_impressions", fb_cur_since, fb_cur_until)
 prev_impressions = get_insight("page_impressions", fb_prev_since, fb_prev_until)
