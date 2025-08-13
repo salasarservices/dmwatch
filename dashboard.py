@@ -971,15 +971,10 @@ with col2:
 # LEADS SECTION
 # =========================
 
-def excel_serial_to_month_year(serial):
-    try:
-        serial = int(float(serial))
-        base_date = datetime(1899, 12, 30)
-        d = base_date + timedelta(days=serial)
-        return d.strftime("%B %Y")
-    except Exception:
-        return ""
+import streamlit as st
+import pandas as pd
 
+# Fetch leads from MongoDB
 def get_leads_from_mongodb():
     try:
         mongo_uri = st.secrets["mongo_uri"]
@@ -994,8 +989,9 @@ def get_leads_from_mongodb():
         st.error(f"Could not fetch leads: {e}")
         return []
 
+# Color the Lead Status column for display
 def lead_status_colored(status):
-    status_clean = str(status).strip().replace('\n', '').replace('\r', '')
+    status_clean = str(status).strip()
     colors = {
         "Interested": "#FFD700",
         "Not Interested": "#FB4141",
@@ -1004,14 +1000,24 @@ def lead_status_colored(status):
     color = colors.get(status_clean, "#666")
     return f"<b style='color: {color};'>{status_clean}</b>"
 
+# Generate a color palette (cycled) for months
+def get_month_color(month_index):
+    palette = [
+        "#f7f1d5", "#fbe4eb", "#d3fbe4", "#e4eaff", "#ffe4f1",
+        "#e4fff6", "#f5e4ff", "#f1ffe4", "#ffe4e4", "#e4f1ff"
+    ]
+    return palette[month_index % len(palette)]
+
+# Streamlit dashboard title
 st.markdown("## Leads Dashboard")
 
+# Fetch leads and build DataFrame
 leads = get_leads_from_mongodb()
-
 if leads:
     df = pd.DataFrame(leads)
+    # Clean "Lead Status" and count occurrences
     if "Lead Status" in df.columns:
-        df["Lead Status Clean"] = df["Lead Status"].astype(str).str.strip().str.replace('\n', '', regex=False).str.replace('\r', '', regex=False)
+        df["Lead Status Clean"] = df["Lead Status"].astype(str).str.strip()
         interested_count = (df["Lead Status Clean"] == "Interested").sum()
         not_interested_count = (df["Lead Status Clean"] == "Not Interested").sum()
         closed_count = (df["Lead Status Clean"] == "Closed").sum()
@@ -1029,6 +1035,7 @@ else:
     df = pd.DataFrame()
     total_leads = interested_count = not_interested_count = closed_count = 0
 
+# Display summary circles (unchanged)
 st.markdown("""
 <style>
 .circles-row {{
@@ -1074,20 +1081,7 @@ st.markdown("""
     80% {{ transform: scale(1.1);}}
     100% {{ transform: scale(1);}}
 }}
-/* Date column coloring */
-.july-cell {{
-    background-color: #f7f1d5 !important;
-    color: #5d4300 !important;
-    font-weight: bold;
-    white-space: nowrap;
-}}
-.august-cell {{
-    background-color: #fbe4eb !important;
-    color: #871d37 !important;
-    font-weight: bold;
-    white-space: nowrap;
-}}
-/* Streamlit-like Table Styling - Adjusted for compact cells and header color */
+/* Table styling */
 .leads-table-wrapper {{
     margin: 0 auto 30px auto;
     width: 98%;
@@ -1121,9 +1115,6 @@ st.markdown("""
 .leads-table tr:last-child td {{
     border-bottom: none;
 }}
-.leads-table tr:nth-child(even) td:not(.july-cell):not(.august-cell) {{
-    background: #f8f9fb;
-}}
 </style>
 <div class="circles-row">
     <div>
@@ -1153,46 +1144,25 @@ st.markdown("""
 st.markdown("### Leads Data")
 
 if not df.empty:
-    # Insert Date column before Number, but drop if already exists
-    if "Number" in df.columns:
-        date_column = []
-        for i in range(len(df)):
-            num = int(df.iloc[i]["Number"]) if "Number" in df.columns and str(df.iloc[i]["Number"]).isdigit() else None
-            if num is not None:
-                if 1 <= num <= 7:
-                    date_column.append("July 2025")
-                elif 8 <= num <= 10:
-                    date_column.append("August 2025")
-                else:
-                    date_column.append("")
-            else:
-                date_column.append("")
-        insert_at = list(df.columns).index("Number")
-        if "Date" in df.columns:
-            df = df.drop(columns=["Date"])
-        df.insert(insert_at, "Date", date_column)
+    # --- Assign unique color to each month ---
+    # Get a sorted list of unique months from "Date" column
+    if "Date" in df.columns:
+        months = df["Date"].fillna("").astype(str).unique()
+        months = [m for m in months if m.strip() != ""]
+        months.sort()
+        month_to_color = {m: get_month_color(i) for i, m in enumerate(months)}
     else:
-        if "Date" in df.columns:
-            df = df.drop(columns=["Date"])
-        df.insert(0, "Date", "")
+        month_to_color = {}
 
     # Color the Lead Status column
     if "Lead Status" in df.columns:
-        df["Lead Status"] = df["Lead Status"].astype(str).str.strip().str.replace('\n', '', regex=False).str.replace('\r', '', regex=False)
+        df["Lead Status"] = df["Lead Status"].astype(str).str.strip()
         df["Lead Status"] = df["Lead Status"].apply(lead_status_colored)
     # Remove helper column if exists
     if "Lead Status Clean" in df.columns:
         df = df.drop(columns=["Lead Status Clean"])
 
-    # Color the Date column using HTML/CSS
-    def color_month_cell(month):
-        if month == "July 2025":
-            return 'class="july-cell"'
-        elif month == "August 2025":
-            return 'class="august-cell"'
-        else:
-            return ""
-
+    # --- HTML rendering with month coloring ---
     def df_to_colored_html(df):
         headers = df.columns.tolist()
         html = '<div class="leads-table-wrapper"><table class="leads-table">\n<thead><tr>'
@@ -1202,8 +1172,11 @@ if not df.empty:
         for idx, row in df.iterrows():
             html += '<tr>'
             for i, cell in enumerate(row):
+                # Color Date cell based on its value
                 if headers[i] == "Date":
-                    html += f'<td {color_month_cell(cell)}>{cell}</td>'
+                    month = str(cell).strip()
+                    bgcolor = f'background-color: {month_to_color.get(month, "#fff")}; font-weight: bold;'
+                    html += f'<td style="{bgcolor}">{cell}</td>'
                 else:
                     html += f'<td>{cell}</td>'
             html += '</tr>'
