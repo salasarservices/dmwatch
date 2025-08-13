@@ -437,9 +437,7 @@ with st.sidebar:
         st.session_state["selected_month"] = month_options[-1]
         st.session_state["refresh"] = True
 
-    pdf_report_btn = st.button("Download PDF Report")
-
-    # --- FLUSH DATABASE FUNCTION ---
+  # --- FLUSH DATABASE FUNCTION ---
     def flush_mongo_database():
         try:
             mongo_uri = st.secrets["mongo_uri"]
@@ -461,6 +459,9 @@ with st.sidebar:
             st.success("All data in the database has been deleted!")
         else:
             st.error("Failed to flush data.")
+
+    pdf_report_btn = st.button("Download PDF Report")
+
 
 if st.session_state.get("refresh", False):
     st.session_state["refresh"] = False
