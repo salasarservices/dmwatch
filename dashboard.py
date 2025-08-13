@@ -442,7 +442,7 @@ with st.sidebar:
 
 if st.session_state.get("refresh", False):
     st.session_state["refresh"] = False
-    st.experimental_rerun()
+    st.rerun()
 
 # --- FLUSH DATABASE FUNCTION ---
 def flush_mongo_database():
