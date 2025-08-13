@@ -395,7 +395,6 @@ def country_name_to_code(name):
             if name.lower() in country.name.lower():
                 return country.alpha_2.lower()
         return None
-
 # =========================
 # SIDEBAR & FILTERS
 # =========================
@@ -440,32 +439,32 @@ with st.sidebar:
 
     pdf_report_btn = st.button("Download PDF Report")
 
- # Place this in your sidebar, right after the PDF button
-flush_btn = st.button("Flush Data 🗑️")
-if flush_btn:
-    if flush_mongo_database():
-        st.success("All data in the database has been deleted!")
-    else:
-        st.error("Failed to flush data.")
+    # --- FLUSH DATABASE FUNCTION ---
+    def flush_mongo_database():
+        try:
+            mongo_uri = st.secrets["mongo_uri"]
+            db_name = "sal-leads"  # Change to your actual database name if different
+            client = MongoClient(mongo_uri)
+            db = client[db_name]
+            for collection_name in db.list_collection_names():
+                db[collection_name].delete_many({})
+            client.close()
+            return True
+        except Exception as e:
+            st.error(f"Could not flush database: {e}")
+            return False
+
+    # Place the flush button RIGHT after the PDF button!
+    flush_btn = st.button("Flush Mongo 🗑️")
+    if flush_btn:
+        if flush_mongo_database():
+            st.success("All data in the database has been deleted!")
+        else:
+            st.error("Failed to flush data.")
 
 if st.session_state.get("refresh", False):
     st.session_state["refresh"] = False
     st.rerun()
-
-# --- FLUSH DATABASE FUNCTION ---
-def flush_mongo_database():
-    try:
-        mongo_uri = st.secrets["mongo_uri"]
-        db_name = "sal-leads"  # Change to your actual database name if different
-        client = MongoClient(mongo_uri)
-        db = client[db_name]
-        for collection_name in db.list_collection_names():
-            db[collection_name].delete_many({})
-        client.close()
-        return True
-    except Exception as e:
-        st.error(f"Could not flush database: {e}")
-        return False
 
 # =========================
 # AUTHENTICATION & CONFIG
