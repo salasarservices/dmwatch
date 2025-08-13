@@ -444,6 +444,29 @@ if st.session_state.get("refresh", False):
     st.session_state["refresh"] = False
     st.experimental_rerun()
 
+# --- FLUSH DATABASE FUNCTION ---
+def flush_mongo_database():
+    try:
+        mongo_uri = st.secrets["mongo_uri"]
+        db_name = "sal-leads"  # Change to your actual database name if different
+        client = MongoClient(mongo_uri)
+        db = client[db_name]
+        for collection_name in db.list_collection_names():
+            db[collection_name].delete_many({})
+        client.close()
+        return True
+    except Exception as e:
+        st.error(f"Could not flush database: {e}")
+        return False
+
+# Place this in your sidebar, right after the PDF button
+flush_btn = st.button("Flush Data 🗑️")
+if flush_btn:
+    if flush_mongo_database():
+        st.success("All data in the database has been deleted!")
+    else:
+        st.error("Failed to flush data.")
+
 # =========================
 # AUTHENTICATION & CONFIG
 # =========================
