@@ -1413,80 +1413,119 @@ st.caption("All data is pulled live from Facebook Graph API. Tokens and IDs are 
 # INSTAGRAM ANALYTICS
 # =========================
 
-# Helper functions
-def number_counter(value, key, duration=1.5):
+# ========== CONFIGURATION ==========
+# Example metric data, replace with real API data in production
+metrics = [
+    {
+        "title": "Impressions",
+        "tooltip": "Total number of times your Instagram content was displayed.",
+        "value": 1245,  # replace with API value
+        "delta": 12.5,  # replace with calculated delta
+        "color": "#A7C7E7"
+    },
+    {
+        "title": "Engagement",
+        "tooltip": "Total likes, comments, shares, and saves on your posts.",
+        "value": 320,
+        "delta": -8.2,
+        "color": "#F7CAC9"
+    },
+    {
+        "title": "Reach",
+        "tooltip": "Unique accounts that saw your content.",
+        "value": 980,
+        "delta": 4.1,
+        "color": "#B5EAD7"
+    },
+    {
+        "title": "Followers",
+        "tooltip": "Total followers as of this month.",
+        "value": 2150,
+        "delta": 2.2,
+        "color": "#FFDAC1"
+    }
+]
+
+selected_month = "August 2025"  # Replace with your selected month variable
+posts_this_month = []  # Replace with list of dicts containing post data for the month
+
+# ========== HELPER FUNCTIONS ==========
+def number_counter(value, key, duration=1.2):
     """Animated counter effect for displaying numerical values."""
     start, end = 0, int(value)
-    steps = 50
-    increment = (end - start) / steps
-    delay = duration / steps
+    steps = 36
+    increment = (end - start) / steps if steps else end
+    delay = duration / steps if steps else 0
     placeholder = st.empty()
     for i in range(steps):
-        placeholder.markdown(f"<div style='font-size:2.5em;font-weight:bold'>{int(start + increment * i)}</div>", unsafe_allow_html=True)
+        placeholder.markdown(f"<span style='font-size:2.3em; font-weight:600;'>{int(start + increment * i)}</span>", unsafe_allow_html=True)
         time.sleep(delay)
-    placeholder.markdown(f"<div style='font-size:2.5em;font-weight:bold'>{end}</div>", unsafe_allow_html=True)
+    placeholder.markdown(f"<span style='font-size:2.3em; font-weight:600;'>{end}</span>", unsafe_allow_html=True)
 
-def delta_arrow(delta):
+def delta_html(delta):
+    """Return HTML for delta with correct color, arrow, and style as per image5."""
     if delta > 0:
-        return f"<span style='color:green;'>⬆️ {abs(delta):.2f}%</span>"
+        color = "#2ecc71"
+        arrow = "&#8593;"
     elif delta < 0:
-        return f"<span style='color:red;'>⬇️ {abs(delta):.2f}%</span>"
+        color = "#e74c3c"
+        arrow = "&#8595;"
     else:
-        return "<span style='color:grey;'>0.00%</span>"
+        color = "#888"
+        arrow = ""
+    return f"""
+    <div style='text-align:center; margin-top:18px;'>
+        <span style='color:{color}; font-size:1.5em; font-weight:600; vertical-align:middle;'>{arrow}</span>
+        <span style='color:{color}; font-size:1.5em; font-weight:600; margin-left:8px; margin-right:8px;'>{abs(delta):.2f}%</span>
+        <span style='color:{color}; font-size:1.1em;'>(vs. Previous Month)</span>
+    </div>
+    """
 
-# Example data (replace with real API values)
-metrics = {
-    "Impressions": {"value": 1245, "delta": 12.5, "tooltip": "Total number of times your content was displayed."},
-    "Engagement": {"value": 320, "delta": -8.2, "tooltip": "Total likes, comments, shares, and saves."},
-    "Reach": {"value": 980, "delta": 4.1, "tooltip": "Unique accounts that saw your content."},
-    "Followers": {"value": 2150, "delta": 2.2, "tooltip": "Total followers as of this month."},
-}
-colors = {
-    "Impressions": "#A7C7E7",
-    "Engagement": "#F7CAC9",
-    "Reach": "#B5EAD7",
-    "Followers": "#FFDAC1",
-}
+def metric_circle(title, tooltip, value, delta, color, key):
+    st.markdown(
+        f"<div style='text-align:center; font-weight:600; font-size:1.13em; margin-bottom:2px;'>{title} <span title='{tooltip}' style='cursor:pointer;color:#888;'>?</span></div>",
+        unsafe_allow_html=True
+    )
+    st.markdown(
+        f"""
+        <div style="
+            margin:auto;
+            background:{color};
+            border-radius:50%;
+            width:120px; height:120px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            box-shadow:0 2px 8px {color};
+            transition: transform 0.2s;
+        ">
+        <div style="width:100%;text-align:center;">
+        """,
+        unsafe_allow_html=True
+    )
+    number_counter(value, key=key)
+    st.markdown("</div></div>", unsafe_allow_html=True)
+    st.markdown(delta_html(delta), unsafe_allow_html=True)
+
+# ========== UI LAYOUT ==========
 
 st.markdown("## Instagram Page Analytics")
 
 cols = st.columns(4)
-for idx, (metric, data) in enumerate(metrics.items()):
+for idx, m in enumerate(metrics):
     with cols[idx]:
-        # Title with tooltip
-        st.markdown(
-            f"<span style='font-weight:600;font-size:1.1em;'>{metric} <span title='{data['tooltip']}' style='cursor:pointer;color:#888;'>?</span></span>",
-            unsafe_allow_html=True
-        )
-        # Circle with animation and hover effect
-        st.markdown(
-            f"""
-            <div style="
-                background:{colors[metric]};
-                border-radius:50%;
-                width:110px;height:110px;
-                display:flex;align-items:center;justify-content:center;
-                margin:auto;
-                box-shadow:0 2px 8px {colors[metric]};
-                transition: transform 0.18s;
-                font-size:2.5em;
-                font-weight:bold;
-            " onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
-            """, unsafe_allow_html=True
-        )
-        number_counter(data["value"], key=metric)
-        st.markdown("</div>", unsafe_allow_html=True)
-        # Delta
-        st.markdown(f"{delta_arrow(data['delta'])} <span style='color:#888;'>(vs. Previous Month)</span>", unsafe_allow_html=True)
+        metric_circle(m["title"], m["tooltip"], m["value"], m["delta"], m["color"], key=m["title"])
 
-# Example post count/table section
-selected_month = "August 2025"
-posts_this_month = []  # Put your post data here
+# Info or warning if no data
+if not any(m["value"] for m in metrics):
+    st.warning("No data detected for any metric. If your Instagram account is new, or if your API token is missing permissions, you may see zeros. Double-check your Instagram access token, permissions, and that your page has analytics data.")
 
+# Posts table section
 st.markdown(f"### Number of Posts in {selected_month}")
 if not posts_this_month:
     st.info("No posts published this month.")
 else:
+    # Example: [{'id': 'abc', 'caption': 'Hello', ...}]
     st.table(posts_this_month)
 
 st.caption("All data is pulled live from Instagram Graph API. Tokens and IDs are loaded securely from Streamlit secrets.")
