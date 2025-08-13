@@ -1014,7 +1014,6 @@ def yyyymmdd_to_month_year(yyyymmdd):
     except Exception:
         return ""
 
-# Streamlit dashboard title
 st.markdown("## Leads Dashboard")
 
 # Fetch leads and build DataFrame
@@ -1034,28 +1033,34 @@ if leads:
     else:
         interested_count = not_interested_count = closed_count = 0
 
-    if "Number" in df.columns and not df.empty:
-        try:
-            total_leads = int(df.iloc[-1]["Number"])
-        except Exception:
-            total_leads = len(df)
-    else:
-        total_leads = len(df)
+    # Total leads (use length, as Number column will be hidden)
+    total_leads = len(df)
+
+    # Handle Brokerage received column (add if not present, fill with 0)
+    if "Brokerage received" not in df.columns:
+        df["Brokerage received"] = 0
+
+    # Calculate total brokerage (as float)
+    try:
+        total_brokerage = df["Brokerage received"].astype(float).sum()
+    except Exception:
+        total_brokerage = 0.0
 else:
     df = pd.DataFrame()
     total_leads = interested_count = not_interested_count = closed_count = 0
+    total_brokerage = 0.0
 
-# Display summary circles (unchanged)
+# Display summary circles (added Total Brokerage received, with ₹ symbol)
 st.markdown("""
 <style>
-.circles-row {{
+.circles-row {
     display: flex;
     justify-content: center;
     gap: 42px;
     margin-bottom: 30px;
     flex-wrap: wrap;
-}}
-.circle-animate {{
+}
+.circle-animate {
     width: 110px;
     height: 110px;
     border-radius: 50%;
@@ -1069,62 +1074,77 @@ st.markdown("""
     animation: pop 1s ease;
     margin-bottom: 6px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-}}
-.circle-animate:hover {{
+}
+.circle-animate:hover {
     transform: scale(1.10);
     box-shadow: 0 8px 32px rgba(250, 190, 88, 0.4);
-}}
-.circle-leads    {{ background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);}}
-.circle-int      {{ background: linear-gradient(135deg, #FFD700 0%, #FFB200 100%);}}
-.circle-notint   {{ background: linear-gradient(135deg, #FB4141 0%, #C91F1F 100%);}}
-.circle-closed   {{ background: linear-gradient(135deg, #B4E50D 0%, #7BA304 100%);}}
-.lead-label {{
+}
+.circle-leads    { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);}
+.circle-int      { background: linear-gradient(135deg, #FFD700 0%, #FFB200 100%);}
+.circle-notint   { background: linear-gradient(135deg, #FB4141 0%, #C91F1F 100%);}
+.circle-closed   { background: linear-gradient(135deg, #B4E50D 0%, #7BA304 100%);}
+.circle-brokerage { background: linear-gradient(135deg, #0dbe62 0%, #1ff1a7 100%);}
+.lead-label {
     text-align:center; 
     font-weight:600;
     font-size: 1.1rem;
     color: #888;
     letter-spacing: 1px;
     margin-bottom: 0.7rem;
-}}
-@keyframes pop {{
-    0% {{ transform: scale(0.5);}}
-    80% {{ transform: scale(1.1);}}
-    100% {{ transform: scale(1);}}
-}}
+}
+@keyframes pop {
+    0% { transform: scale(0.5);}
+    80% { transform: scale(1.1);}
+    100% { transform: scale(1);}
+}
 /* Table styling */
-.leads-table-wrapper {{
+.leads-table-wrapper {
     margin: 0 auto 30px auto;
-    width: 98%;
+    width: 95vw;
+    min-width: 760px;
     overflow-x: auto;
     font-family: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
-}}
-.leads-table {{
+    background: #fff;
+}
+.leads-table {
     border-collapse: collapse;
     width: 100%;
     background: #fff;
     border-radius: 12px;
     overflow: hidden;
-    font-size: 0.97rem;
-}}
-.leads-table th {{
+    font-size: 0.92rem;
+    min-width: 760px;
+}
+.leads-table th {
     background: #2d448d;
     color: #ffff;
     font-weight: 700;
-    padding: 0.3em 0.5em;
+    padding: 0.24em 0.40em;
     border-bottom: 1.5px solid #e3e6eb;
     text-align: left;
     white-space: nowrap;
-}}
-.leads-table td {{
-    padding: 0.25em 0.4em;
+    font-size: 0.97rem;
+}
+.leads-table td {
+    padding: 0.16em 0.35em;
     border-bottom: 1px solid #e3e6eb;
     background: #fff;
     vertical-align: middle;
     white-space: nowrap;
-}}
-.leads-table tr:last-child td {{
+    font-size: 0.92rem;
+}
+.leads-table tr:last-child td {
     border-bottom: none;
-}}
+}
+.leads-table-wrapper::-webkit-scrollbar {
+    height: 12px;
+    background: #e6eaf2;
+    border-radius: 8px;
+}
+.leads-table-wrapper::-webkit-scrollbar-thumb {
+    background: #b5b9c5;
+    border-radius: 8px;
+}
 </style>
 <div class="circles-row">
     <div>
@@ -1143,12 +1163,17 @@ st.markdown("""
         <div class="circle-animate circle-closed">{closed_count}</div>
         <div class="lead-label">Closed</div>
     </div>
+    <div>
+        <div class="circle-animate circle-brokerage">₹ {total_brokerage:.2f}</div>
+        <div class="lead-label">Total Brokerage received</div>
+    </div>
 </div>
 """.format(
     total_leads=total_leads,
     interested_count=interested_count,
     not_interested_count=not_interested_count,
-    closed_count=closed_count
+    closed_count=closed_count,
+    total_brokerage=total_brokerage,
 ), unsafe_allow_html=True)
 
 st.markdown("### Leads Data")
@@ -1169,6 +1194,21 @@ if not df.empty:
         df["Lead Status"] = df["Lead Status"].apply(lead_status_colored)
     if "Lead Status Clean" in df.columns:
         df = df.drop(columns=["Lead Status Clean"])
+
+    # --- Prepare DataFrame for display ---
+    # Drop 'Number' column if it exists
+    if "Number" in df.columns:
+        df = df.drop(columns=["Number"])
+
+    # Ensure 'Brokerage received' column exists and is after 'Lead Status'
+    lead_status_idx = df.columns.get_loc("Lead Status") if "Lead Status" in df.columns else -1
+    if "Brokerage received" in df.columns and lead_status_idx != -1:
+        # Format values with ₹ symbol and 2 decimals
+        df["Brokerage received"] = df["Brokerage received"].apply(lambda x: f"₹ {float(x):.2f}")
+        # Move 'Brokerage received' just after 'Lead Status'
+        cols = list(df.columns)
+        cols.insert(lead_status_idx + 1, cols.pop(cols.index("Brokerage received")))
+        df = df[cols]
 
     # --- HTML rendering with month coloring ---
     def df_to_colored_html(df):
