@@ -971,9 +971,6 @@ with col2:
 # LEADS SECTION
 # =========================
 
-import streamlit as st
-import pandas as pd
-
 # Fetch leads from MongoDB
 def get_leads_from_mongodb():
     try:
@@ -1008,6 +1005,15 @@ def get_month_color(month_index):
     ]
     return palette[month_index % len(palette)]
 
+# Convert date in YYYYMMDD (e.g. 20250701) to 'Month Year' (e.g. 'July 2025')
+def yyyymmdd_to_month_year(yyyymmdd):
+    try:
+        date_str = str(yyyymmdd)[:8]
+        dt = datetime.strptime(date_str, "%Y%m%d")
+        return dt.strftime("%B %Y")
+    except Exception:
+        return ""
+
 # Streamlit dashboard title
 st.markdown("## Leads Dashboard")
 
@@ -1015,6 +1021,10 @@ st.markdown("## Leads Dashboard")
 leads = get_leads_from_mongodb()
 if leads:
     df = pd.DataFrame(leads)
+    # Convert 'Date' column to 'Month Year' if it exists and is in YYYYMMDD format
+    if "Date" in df.columns:
+        df["Date"] = df["Date"].apply(yyyymmdd_to_month_year)
+
     # Clean "Lead Status" and count occurrences
     if "Lead Status" in df.columns:
         df["Lead Status Clean"] = df["Lead Status"].astype(str).str.strip()
@@ -1145,7 +1155,6 @@ st.markdown("### Leads Data")
 
 if not df.empty:
     # --- Assign unique color to each month ---
-    # Get a sorted list of unique months from "Date" column
     if "Date" in df.columns:
         months = df["Date"].fillna("").astype(str).unique()
         months = [m for m in months if m.strip() != ""]
@@ -1158,7 +1167,6 @@ if not df.empty:
     if "Lead Status" in df.columns:
         df["Lead Status"] = df["Lead Status"].astype(str).str.strip()
         df["Lead Status"] = df["Lead Status"].apply(lead_status_colored)
-    # Remove helper column if exists
     if "Lead Status Clean" in df.columns:
         df = df.drop(columns=["Lead Status Clean"])
 
