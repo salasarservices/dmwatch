@@ -1053,14 +1053,14 @@ else:
 # Display summary circles (added Total Brokerage received, with ₹ symbol)
 st.markdown("""
 <style>
-.circles-row {
+.circles-row {{
     display: flex;
     justify-content: center;
     gap: 42px;
     margin-bottom: 30px;
     flex-wrap: wrap;
-}
-.circle-animate {
+}}
+.circle-animate {{
     width: 110px;
     height: 110px;
     border-radius: 50%;
@@ -1074,39 +1074,39 @@ st.markdown("""
     animation: pop 1s ease;
     margin-bottom: 6px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.circle-animate:hover {
+}}
+.circle-animate:hover {{
     transform: scale(1.10);
     box-shadow: 0 8px 32px rgba(250, 190, 88, 0.4);
-}
-.circle-leads    { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);}
-.circle-int      { background: linear-gradient(135deg, #FFD700 0%, #FFB200 100%);}
-.circle-notint   { background: linear-gradient(135deg, #FB4141 0%, #C91F1F 100%);}
-.circle-closed   { background: linear-gradient(135deg, #B4E50D 0%, #7BA304 100%);}
-.circle-brokerage { background: linear-gradient(135deg, #0dbe62 0%, #1ff1a7 100%);}
-.lead-label {
+}}
+.circle-leads    {{ background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);}}
+.circle-int      {{ background: linear-gradient(135deg, #FFD700 0%, #FFB200 100%);}}
+.circle-notint   {{ background: linear-gradient(135deg, #FB4141 0%, #C91F1F 100%);}}
+.circle-closed   {{ background: linear-gradient(135deg, #B4E50D 0%, #7BA304 100%);}}
+.circle-brokerage {{ background: linear-gradient(135deg, #0dbe62 0%, #1ff1a7 100%);}}
+.lead-label {{
     text-align:center; 
     font-weight:600;
     font-size: 1.1rem;
     color: #888;
     letter-spacing: 1px;
     margin-bottom: 0.7rem;
-}
-@keyframes pop {
-    0% { transform: scale(0.5);}
-    80% { transform: scale(1.1);}
-    100% { transform: scale(1);}
-}
+}}
+@keyframes pop {{
+    0% {{ transform: scale(0.5);}}
+    80% {{ transform: scale(1.1);}}
+    100% {{ transform: scale(1);}}
+}}
 /* Table styling */
-.leads-table-wrapper {
+.leads-table-wrapper {{
     margin: 0 auto 30px auto;
     width: 95vw;
     min-width: 760px;
     overflow-x: auto;
     font-family: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
     background: #fff;
-}
-.leads-table {
+}}
+.leads-table {{
     border-collapse: collapse;
     width: 100%;
     background: #fff;
@@ -1114,8 +1114,8 @@ st.markdown("""
     overflow: hidden;
     font-size: 0.92rem;
     min-width: 760px;
-}
-.leads-table th {
+}}
+.leads-table th {{
     background: #2d448d;
     color: #ffff;
     font-weight: 700;
@@ -1124,27 +1124,27 @@ st.markdown("""
     text-align: left;
     white-space: nowrap;
     font-size: 0.97rem;
-}
-.leads-table td {
+}}
+.leads-table td {{
     padding: 0.16em 0.35em;
     border-bottom: 1px solid #e3e6eb;
     background: #fff;
     vertical-align: middle;
     white-space: nowrap;
     font-size: 0.92rem;
-}
-.leads-table tr:last-child td {
+}}
+.leads-table tr:last-child td {{
     border-bottom: none;
-}
-.leads-table-wrapper::-webkit-scrollbar {
+}}
+.leads-table-wrapper::-webkit-scrollbar {{
     height: 12px;
     background: #e6eaf2;
     border-radius: 8px;
-}
-.leads-table-wrapper::-webkit-scrollbar-thumb {
+}}
+.leads-table-wrapper::-webkit-scrollbar-thumb {{
     background: #b5b9c5;
     border-radius: 8px;
-}
+}}
 </style>
 <div class="circles-row">
     <div>
