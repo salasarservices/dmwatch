@@ -1575,8 +1575,8 @@ st.markdown("""
     margin:auto;
     margin-bottom:12px;
     border-radius:50%;
-    width:160px;
-    height:160px;
+    width:120px;
+    height:120px;
     display:flex;
     align-items:center;
     justify-content:center;
