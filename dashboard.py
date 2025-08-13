@@ -440,6 +440,14 @@ with st.sidebar:
 
     pdf_report_btn = st.button("Download PDF Report")
 
+ # Place this in your sidebar, right after the PDF button
+flush_btn = st.button("Flush Data 🗑️")
+if flush_btn:
+    if flush_mongo_database():
+        st.success("All data in the database has been deleted!")
+    else:
+        st.error("Failed to flush data.")
+
 if st.session_state.get("refresh", False):
     st.session_state["refresh"] = False
     st.rerun()
@@ -458,14 +466,6 @@ def flush_mongo_database():
     except Exception as e:
         st.error(f"Could not flush database: {e}")
         return False
-
-# Place this in your sidebar, right after the PDF button
-flush_btn = st.button("Flush Data 🗑️")
-if flush_btn:
-    if flush_mongo_database():
-        st.success("All data in the database has been deleted!")
-    else:
-        st.error("Failed to flush data.")
 
 # =========================
 # AUTHENTICATION & CONFIG
