@@ -401,24 +401,28 @@ def country_name_to_code(name):
 with st.sidebar:
     st.image("https://www.salasarservices.com/assets/Frontend/images/logo-black.png", width=170)
     st.title('Report Filters')
+
     def get_month_options():
         months, today, d = [], date.today(), date(2025,1,1)
         while d <= today:
             months.append(d)
             d += relativedelta(months=1)
         return [m.strftime('%B %Y') for m in months]
+
     month_options = get_month_options()
     if "selected_month" not in st.session_state:
         st.session_state["selected_month"] = month_options[-1]
     sel = st.selectbox('Select report month:', month_options, index=month_options.index(st.session_state["selected_month"]))
     if sel != st.session_state["selected_month"]:
         st.session_state["selected_month"] = sel
+
     def get_month_range(sel):
         start = datetime.strptime(sel, '%B %Y').date().replace(day=1)
         end = start + relativedelta(months=1) - timedelta(days=1)
         prev_end = start - timedelta(days=1)
         prev_start = prev_end.replace(day=1)
         return start, end, prev_start, prev_end
+
     sd, ed, psd, ped = get_month_range(st.session_state["selected_month"])
     st.markdown(
         f"""
@@ -431,13 +435,14 @@ with st.sidebar:
         """,
         unsafe_allow_html=True
     )
+
     if st.button("Refresh Data (Clear Cache)"):
         st.cache_data.clear()
         st.cache_resource.clear()
         st.session_state["selected_month"] = month_options[-1]
         st.session_state["refresh"] = True
 
-  # --- FLUSH DATABASE FUNCTION ---
+    # --- FLUSH DATABASE FUNCTION ---
     def flush_mongo_database():
         try:
             mongo_uri = st.secrets["mongo_uri"]
@@ -452,7 +457,7 @@ with st.sidebar:
             st.error(f"Could not flush database: {e}")
             return False
 
-    # Place the flush button RIGHT after the PDF button!
+    # Place the flush button RIGHT after the "Refresh Data" button and BEFORE the PDF button!
     flush_btn = st.button("Flush Mongo 🗑️")
     if flush_btn:
         if flush_mongo_database():
@@ -461,7 +466,6 @@ with st.sidebar:
             st.error("Failed to flush data.")
 
     pdf_report_btn = st.button("Download PDF Report")
-
 
 if st.session_state.get("refresh", False):
     st.session_state["refresh"] = False
