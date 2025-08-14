@@ -971,7 +971,6 @@ with col2:
 # LEADS SECTION
 # =========================
 
-# Fetch leads from MongoDB
 def get_leads_from_mongodb():
     try:
         mongo_uri = st.secrets["mongo_uri"]
@@ -986,7 +985,6 @@ def get_leads_from_mongodb():
         st.error(f"Could not fetch leads: {e}")
         return []
 
-# Color the Lead Status column for display
 def lead_status_colored(status):
     status_clean = str(status).strip()
     colors = {
@@ -997,7 +995,6 @@ def lead_status_colored(status):
     color = colors.get(status_clean, "#666")
     return f"<b style='color: {color};'>{status_clean}</b>"
 
-# Generate a color palette (cycled) for months
 def get_month_color(month_index):
     palette = [
         "#f7f1d5", "#fbe4eb", "#d3fbe4", "#e4eaff", "#ffe4f1",
@@ -1005,7 +1002,6 @@ def get_month_color(month_index):
     ]
     return palette[month_index % len(palette)]
 
-# Convert date in YYYYMMDD (e.g. 20250701) to 'Month Year' (e.g. 'July 2025')
 def yyyymmdd_to_month_year(yyyymmdd):
     try:
         date_str = str(yyyymmdd)[:8]
@@ -1014,7 +1010,6 @@ def yyyymmdd_to_month_year(yyyymmdd):
     except Exception:
         return ""
 
-# Format brokerage value as ₹ XXK for values >= 10,000
 def format_brokerage_circle_value(val):
     if val >= 10000000:
         return f"₹ {val/10000000:.1f}Cr"
@@ -1036,21 +1031,17 @@ if leads:
     if "Date" in df.columns:
         df["Date"] = df["Date"].apply(yyyymmdd_to_month_year)
 
-    # Merge Brokerage columns (case-insensitive)
-    colnames = [col.lower() for col in df.columns]
-    if "brokerage received" in colnames:
-        brcv_col = df.columns[colnames.index("brokerage received")]
-        df["Brokerage received"] = pd.to_numeric(df[brcv_col], errors="coerce")
-    elif "brokerage received" not in df.columns:
-        df["Brokerage received"] = 0.0
+    # Only use the exact "Brokerage Received" field for calculations and display
+    if "Brokerage Received" in df.columns:
+        # Convert to numeric, coerce errors (non-numeric/nan/null become np.nan)
+        df["Brokerage Received"] = pd.to_numeric(df["Brokerage Received"], errors="coerce")
+        # Sum ignoring nan/null
+        total_brokerage = df["Brokerage Received"].dropna().sum()
+    else:
+        df["Brokerage Received"] = np.nan
+        total_brokerage = 0.0
 
-    # If there's another similar column (wrong case), merge its values too
-    for col in df.columns:
-        if col.lower() == "brokerage received" and col != "Brokerage received":
-            df["Brokerage received"] = df["Brokerage received"].fillna(0) + pd.to_numeric(df[col], errors="coerce").fillna(0)
-            df = df.drop(columns=[col])
-
-    # Clean Lead Status and counts
+    # Lead status counts
     if "Lead Status" in df.columns:
         df["Lead Status Clean"] = df["Lead Status"].astype(str).str.strip()
         interested_count = (df["Lead Status Clean"] == "Interested").sum()
@@ -1060,8 +1051,6 @@ if leads:
         interested_count = not_interested_count = closed_count = 0
 
     total_leads = len(df)
-    total_brokerage = df["Brokerage received"].fillna(0).sum()
-
 else:
     df = pd.DataFrame()
     total_leads = interested_count = not_interested_count = closed_count = 0
@@ -1218,18 +1207,17 @@ if not df.empty:
     # Drop 'Number' column if it exists
     if "Number" in df.columns:
         df = df.drop(columns=["Number"])
-    # Drop any duplicate brokerage columns (case-insensitive)
-    for col in df.columns:
-        if col.lower() == "brokerage received" and col != "Brokerage received":
-            df = df.drop(columns=[col])
 
-    # Format 'Brokerage received' column with ₹ and 2 decimals, place after 'Lead Status'
-    if "Brokerage received" in df.columns:
-        df["Brokerage received"] = df["Brokerage received"].fillna(0).apply(lambda x: f"₹ {float(x):.2f}")
+    # Only show "Brokerage Received" (case-sensitive) column, formatted for display
+    if "Brokerage Received" in df.columns:
+        df["Brokerage Received"] = df["Brokerage Received"].apply(
+            lambda x: f"₹ {x:.2f}" if pd.notnull(x) else ""
+        )
+        # Place Brokerage Received just after Lead Status if present
         lead_status_idx = df.columns.get_loc("Lead Status") if "Lead Status" in df.columns else -1
         if lead_status_idx != -1:
             cols = list(df.columns)
-            cols.insert(lead_status_idx + 1, cols.pop(cols.index("Brokerage received")))
+            cols.insert(lead_status_idx + 1, cols.pop(cols.index("Brokerage Received")))
             df = df[cols]
 
     def df_to_colored_html(df):
