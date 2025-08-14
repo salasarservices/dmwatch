@@ -986,6 +986,7 @@ def get_leads_from_mongodb():
         st.error(f"Could not fetch leads: {e}")
         return []
 
+# Color the Lead Status column for display
 def lead_status_colored(status):
     status_clean = str(status).strip()
     colors = {
@@ -996,6 +997,7 @@ def lead_status_colored(status):
     color = colors.get(status_clean, "#666")
     return f"<b style='color: {color};'>{status_clean}</b>"
 
+# Generate a color palette (cycled) for months
 def get_month_color(month_index):
     palette = [
         "#f7f1d5", "#fbe4eb", "#d3fbe4", "#e4eaff", "#ffe4f1",
@@ -1003,6 +1005,7 @@ def get_month_color(month_index):
     ]
     return palette[month_index % len(palette)]
 
+# Convert date in YYYYMMDD (e.g. 20250701) to 'Month Year' (e.g. 'July 2025')
 def yyyymmdd_to_month_year(yyyymmdd):
     try:
         date_str = str(yyyymmdd)[:8]
@@ -1010,6 +1013,19 @@ def yyyymmdd_to_month_year(yyyymmdd):
         return dt.strftime("%B %Y")
     except Exception:
         return ""
+
+# Format brokerage value as ₹ XXK for values >= 10,000
+def format_brokerage_circle_value(val):
+    if val >= 10000000:
+        return f"₹ {val/10000000:.1f}Cr"
+    elif val >= 100000:
+        return f"₹ {val/100000:.1f}L"
+    elif val >= 10000:
+        return f"₹ {val/1000:.0f}K"
+    elif val >= 1000:
+        return f"₹ {val/1000:.1f}K"
+    else:
+        return f"₹ {val:.2f}"
 
 st.markdown("## Leads Dashboard")
 
@@ -1051,6 +1067,8 @@ else:
     total_leads = interested_count = not_interested_count = closed_count = 0
     total_brokerage = 0.0
 
+display_brokerage = format_brokerage_circle_value(total_brokerage)
+
 st.markdown("""
 <style>
 .circles-row {{
@@ -1067,13 +1085,15 @@ st.markdown("""
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.2rem;
+    font-size: 2.1rem;
     color: #fff;
     font-weight: bold;
     box-shadow: 0 4px 16px rgba(250, 190, 88, 0.3);
     animation: pop 1s ease;
     margin-bottom: 6px;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-shadow: 0 1px 3px #2227;
+    letter-spacing: 1px;
 }}
 .circle-animate:hover {{
     transform: scale(1.10);
@@ -1164,7 +1184,7 @@ st.markdown("""
         <div class="lead-label">Closed</div>
     </div>
     <div>
-        <div class="circle-animate circle-brokerage">₹ {total_brokerage:.2f}</div>
+        <div class="circle-animate circle-brokerage">{display_brokerage}</div>
         <div class="lead-label">Total Brokerage received</div>
     </div>
 </div>
@@ -1173,7 +1193,7 @@ st.markdown("""
     interested_count=interested_count,
     not_interested_count=not_interested_count,
     closed_count=closed_count,
-    total_brokerage=total_brokerage,
+    display_brokerage=display_brokerage,
 ), unsafe_allow_html=True)
 
 st.markdown("### Leads Data")
@@ -1237,6 +1257,7 @@ if not df.empty:
     )
 else:
     st.info("No leads data found in MongoDB.")
+
     
 # =========================
 # SOCIAL MEDIA ANALYTICS REPORTING DASHBOARD STARTS
