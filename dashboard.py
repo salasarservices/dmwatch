@@ -1031,7 +1031,7 @@ if leads:
     if "Date" in df.columns:
         df["Date"] = df["Date"].apply(yyyymmdd_to_month_year)
 
-    # Only use the exact "Brokerage Received" field for calculations and display
+    # Use only the exact "Brokerage Received" field for calculation and display
     if "Brokerage Received" in df.columns:
         # Convert to numeric, coerce errors (non-numeric/nan/null become np.nan)
         df["Brokerage Received"] = pd.to_numeric(df["Brokerage Received"], errors="coerce")
@@ -1058,16 +1058,97 @@ else:
 
 display_brokerage = format_brokerage_circle_value(total_brokerage)
 
+# ----- Professional Table Style -----
 st.markdown("""
 <style>
-.circles-row {{
+.leads-table-wrapper {
+    margin: 0 auto 16px auto;
+    width: 98vw;
+    min-width: 360px;
+    max-width: 1100px;
+    overflow-x: auto;
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.09);
+    padding: 8px 0 18px 0;
+}
+.leads-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    min-width: 360px;
+    background: #fff;
+    font-size: 0.90rem;
+    border-radius: 12px;
+    overflow: hidden;
+}
+.leads-table th {
+    background: linear-gradient(90deg, #31406e 0%, #37509b 100%);
+    color: #fff;
+    font-weight: 600;
+    padding: 9px 18px 8px 13px;
+    border-bottom: 2.5px solid #e3e6eb;
+    text-align: left;
+    white-space: nowrap;
+    font-size: 1.02rem;
+    letter-spacing: 0.02em;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    box-shadow: 0 2px 6px rgba(44,62,80,0.04);
+}
+.leads-table td {
+    padding: 7px 13px 6px 13px;
+    border-bottom: 1px solid #f1f2f6;
+    background: #fff;
+    vertical-align: middle;
+    white-space: nowrap;
+    font-size: 0.93rem;
+    color: #21272b;
+    line-height: 1.35;
+    letter-spacing: 0.01em;
+    transition: background 0.17s;
+}
+.leads-table tr:hover td {
+    background: #f5f7fa;
+}
+.leads-table tr:last-child td {
+    border-bottom: none;
+}
+.leads-table th:first-child, .leads-table td:first-child {
+    border-top-left-radius: 10px;
+}
+.leads-table th:last-child, .leads-table td:last-child {
+    border-top-right-radius: 10px;
+}
+.leads-table-wrapper::-webkit-scrollbar {
+    height: 8px;
+    background: #e6eaf2;
+    border-radius: 5px;
+}
+.leads-table-wrapper::-webkit-scrollbar-thumb {
+    background: #b5b9c5;
+    border-radius: 5px;
+}
+@media (max-width: 900px) {
+    .leads-table th, .leads-table td {
+        font-size: 0.87rem;
+        padding: 6px 8px 5px 8px;
+    }
+    .leads-table-wrapper {
+        max-width: 99vw;
+        padding: 0 0 8px 0;
+    }
+}
+.circles-row {
     display: flex;
     justify-content: center;
     gap: 42px;
     margin-bottom: 30px;
     flex-wrap: wrap;
-}}
-.circle-animate {{
+}
+.circle-animate {
     width: 110px;
     height: 110px;
     border-radius: 50%;
@@ -1083,78 +1164,34 @@ st.markdown("""
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     text-shadow: 0 1px 3px #2227;
     letter-spacing: 1px;
-}}
-.circle-animate:hover {{
+}
+.circle-animate:hover {
     transform: scale(1.10);
     box-shadow: 0 8px 32px rgba(250, 190, 88, 0.4);
-}}
-.circle-leads    {{ background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);}}
-.circle-int      {{ background: linear-gradient(135deg, #FFD700 0%, #FFB200 100%);}}
-.circle-notint   {{ background: linear-gradient(135deg, #FB4141 0%, #C91F1F 100%);}}
-.circle-closed   {{ background: linear-gradient(135deg, #B4E50D 0%, #7BA304 100%);}}
-.circle-brokerage {{ background: linear-gradient(135deg, #0dbe62 0%, #1ff1a7 100%);}}
-.lead-label {{
+}
+.circle-leads    { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);}
+.circle-int      { background: linear-gradient(135deg, #FFD700 0%, #FFB200 100%);}
+.circle-notint   { background: linear-gradient(135deg, #FB4141 0%, #C91F1F 100%);}
+.circle-closed   { background: linear-gradient(135deg, #B4E50D 0%, #7BA304 100%);}
+.circle-brokerage { background: linear-gradient(135deg, #0dbe62 0%, #1ff1a7 100%);}
+.lead-label {
     text-align:center; 
     font-weight:600;
     font-size: 1.1rem;
     color: #888;
     letter-spacing: 1px;
     margin-bottom: 0.7rem;
-}}
-@keyframes pop {{
-    0% {{ transform: scale(0.5);}}
-    80% {{ transform: scale(1.1);}}
-    100% {{ transform: scale(1);}}
-}}
-/* Table styling */
-.leads-table-wrapper {{
-    margin: 0 auto 30px auto;
-    width: 95vw;
-    min-width: 760px;
-    overflow-x: auto;
-    font-family: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
-    background: #fff;
-}}
-.leads-table {{
-    border-collapse: collapse;
-    width: 100%;
-    background: #fff;
-    border-radius: 12px;
-    overflow: hidden;
-    font-size: 0.92rem;
-    min-width: 760px;
-}}
-.leads-table th {{
-    background: #2d448d;
-    color: #ffff;
-    font-weight: 700;
-    padding: 0.24em 0.40em;
-    border-bottom: 1.5px solid #e3e6eb;
-    text-align: left;
-    white-space: nowrap;
-    font-size: 0.97rem;
-}}
-.leads-table td {{
-    padding: 0.16em 0.35em;
-    border-bottom: 1px solid #e3e6eb;
-    background: #fff;
-    vertical-align: middle;
-    white-space: nowrap;
-    font-size: 0.92rem;
-}}
-.leads-table tr:last-child td {{
-    border-bottom: none;
-}}
-.leads-table-wrapper::-webkit-scrollbar {{
-    height: 12px;
-    background: #e6eaf2;
-    border-radius: 8px;
-}}
-.leads-table-wrapper::-webkit-scrollbar-thumb {{
-    background: #b5b9c5;
-    border-radius: 8px;
-}}
+}
+@keyframes pop {
+    0% { transform: scale(0.5);}
+    80% { transform: scale(1.1);}
+    100% { transform: scale(1);}
+}
 </style>
+""", unsafe_allow_html=True)
+
+# --- Dashboard Circles ---
+st.markdown(f"""
 <div class="circles-row">
     <div>
         <div class="circle-animate circle-leads">{total_leads}</div>
@@ -1177,13 +1214,7 @@ st.markdown("""
         <div class="lead-label">Total Brokerage received</div>
     </div>
 </div>
-""".format(
-    total_leads=total_leads,
-    interested_count=interested_count,
-    not_interested_count=not_interested_count,
-    closed_count=closed_count,
-    display_brokerage=display_brokerage,
-), unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 st.markdown("### Leads Data")
 
