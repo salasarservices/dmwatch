@@ -1491,8 +1491,13 @@ st.caption("All data is pulled live from Facebook Graph API. Tokens and IDs are 
 # YOUTUBE API CONFIGURATION
 # =========================
 
-# Helper function: to dynamically fetch the access token using your refresh_token
 def get_access_token(client_id, client_secret, refresh_token):
+    if not refresh_token or refresh_token == "YOUR_REFRESH_TOKEN":
+        st.error(
+            "Missing refresh token! Please generate a new refresh token using the OAuth flow "
+            "and add it to your .streamlit/secrets.toml under [youtube]."
+        )
+        st.stop()
     url = "https://oauth2.googleapis.com/token"
     data = {
         "client_id": client_id,
@@ -1502,15 +1507,13 @@ def get_access_token(client_id, client_secret, refresh_token):
     }
     response = requests.post(url, data=data)
     if response.status_code != 200:
-        st.error(f"OAuth error: {response.text}") # <-- Shows error in Streamlit UI
-    response.raise_for_status()
+        st.error(f"OAuth error: {response.text}")  # Show error in Streamlit UI
+        st.stop()
     return response.json()["access_token"]
 
-# Helper function: Set headers for OAuth requests
 def get_auth_headers(access_token):
     return {"Authorization": f"Bearer {access_token}", "Accept": "application/json"}
 
-# Helper function: Get start and end dates for current and previous period (monthly granularity)
 def get_date_ranges():
     today = datetime.date.today()
     start_cur = today.replace(day=1)
@@ -1520,9 +1523,9 @@ def get_date_ranges():
     return start_cur, end_cur, start_prev, end_prev
 
 # Place your YouTube Data API v3 and YouTube Analytics API credentials below
-client_id = st.secrets["youtube"]["client_id"]
-client_secret = st.secrets["youtube"]["client_secret"]
-refresh_token = st.secrets["youtube"]["refresh_token"]
+client_id = st.secrets["youtube"].get("client_id", "YOUR_CLIENT_ID")
+client_secret = st.secrets["youtube"].get("client_secret", "YOUR_CLIENT_SECRET")
+refresh_token = st.secrets["youtube"].get("refresh_token", "YOUR_REFRESH_TOKEN")
 
 ACCESS_TOKEN = get_access_token(client_id, client_secret, refresh_token)
 
