@@ -1490,9 +1490,24 @@ st.caption("All data is pulled live from Facebook Graph API. Tokens and IDs are 
 # YOUTUBE API CONFIGURATION
 # =========================
 # Place your YouTube Data API v3 and YouTube Analytics API credentials below
-YOUTUBE_API_KEY = st.secrets["youtube"]["api_key"]
-CHANNEL_ID = st.secrets["youtube"]["channel_id"]
-ACCESS_TOKEN = st.secrets["youtube"]["access_token"]  # OAuth 2.0 access token for YouTube Analytics API
+client_id = st.secrets["youtube"]["client_id"]
+client_secret = st.secrets["youtube"]["client_secret"]
+refresh_token = st.secrets["youtube"]["refresh_token"]
+
+ACCESS_TOKEN = get_access_token(client_id, client_secret, refresh_token)
+
+# Helper function: to dynamically fetch the access token using your refresh_token
+def get_access_token(client_id, client_secret, refresh_token):
+    url = "https://oauth2.googleapis.com/token"
+    data = {
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "refresh_token": refresh_token,
+        "grant_type": "refresh_token"
+    }
+    response = requests.post(url, data=data)
+    response.raise_for_status()
+    return response.json()["access_token"]
 
 # Helper function: Set headers for OAuth requests
 def get_auth_headers():
