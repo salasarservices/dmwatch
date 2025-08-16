@@ -1501,9 +1501,8 @@ def get_access_token(client_id, client_secret, refresh_token):
         "grant_type": "refresh_token"
     }
     response = requests.post(url, data=data)
-    # Debugging: print error details if the request fails
     if response.status_code != 200:
-        print("OAuth error:", response.text)
+        st.error(f"OAuth error: {response.text}") # <-- Shows error in Streamlit UI
     response.raise_for_status()
     return response.json()["access_token"]
 
