@@ -1492,6 +1492,7 @@ st.caption("All data is pulled live from Facebook Graph API. Tokens and IDs are 
 # =========================
 
 def get_access_token(client_id, client_secret, refresh_token):
+    """Dynamically fetches an access token using your refresh_token."""
     if not refresh_token or refresh_token == "YOUR_REFRESH_TOKEN":
         st.error(
             "Missing refresh token! Please generate a new refresh token using the OAuth flow "
@@ -1507,14 +1508,16 @@ def get_access_token(client_id, client_secret, refresh_token):
     }
     response = requests.post(url, data=data)
     if response.status_code != 200:
-        st.error(f"OAuth error: {response.text}")  # Show error in Streamlit UI
+        st.error(f"OAuth error: {response.text}")
         st.stop()
     return response.json()["access_token"]
 
 def get_auth_headers(access_token):
+    """Sets headers for OAuth requests."""
     return {"Authorization": f"Bearer {access_token}", "Accept": "application/json"}
 
 def get_date_ranges():
+    """Gets start and end dates for current and previous period (monthly granularity)."""
     today = datetime.date.today()
     start_cur = today.replace(day=1)
     end_cur = today
@@ -1522,7 +1525,7 @@ def get_date_ranges():
     end_prev = start_cur - datetime.timedelta(days=1)
     return start_cur, end_cur, start_prev, end_prev
 
-# Place your YouTube Data API v3 and YouTube Analytics API credentials below
+# Read credentials from Streamlit secrets
 client_id = st.secrets["youtube"].get("client_id", "YOUR_CLIENT_ID")
 client_secret = st.secrets["youtube"].get("client_secret", "YOUR_CLIENT_SECRET")
 refresh_token = st.secrets["youtube"].get("refresh_token", "YOUR_REFRESH_TOKEN")
