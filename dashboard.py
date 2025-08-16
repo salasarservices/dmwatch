@@ -3,6 +3,7 @@ from google.oauth2 import service_account
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from googleapiclient.discovery import build
 from google.auth.transport.requests import Request as GAuthRequest
+from google_auth_oauthlib.flow import InstalledAppFlow
 from datetime import datetime, date, timedelta
 from dateutil.relativedelta import relativedelta
 import pandas as pd
