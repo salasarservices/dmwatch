@@ -1501,19 +1501,15 @@ def get_access_token(client_id, client_secret, refresh_token):
         "grant_type": "refresh_token"
     }
     response = requests.post(url, data=data)
+    # Debugging: print error details if the request fails
+    if response.status_code != 200:
+        print("OAuth error:", response.text)
     response.raise_for_status()
     return response.json()["access_token"]
 
-# Place your YouTube Data API v3 and YouTube Analytics API credentials below
-client_id = st.secrets["youtube"]["client_id"]
-client_secret = st.secrets["youtube"]["client_secret"]
-refresh_token = st.secrets["youtube"]["refresh_token"]
-
-ACCESS_TOKEN = get_access_token(client_id, client_secret, refresh_token)
-
 # Helper function: Set headers for OAuth requests
-def get_auth_headers():
-    return {"Authorization": f"Bearer {ACCESS_TOKEN}", "Accept": "application/json"}
+def get_auth_headers(access_token):
+    return {"Authorization": f"Bearer {access_token}", "Accept": "application/json"}
 
 # Helper function: Get start and end dates for current and previous period (monthly granularity)
 def get_date_ranges():
@@ -1523,6 +1519,13 @@ def get_date_ranges():
     start_prev = (start_cur - datetime.timedelta(days=1)).replace(day=1)
     end_prev = start_cur - datetime.timedelta(days=1)
     return start_cur, end_cur, start_prev, end_prev
+
+# Place your YouTube Data API v3 and YouTube Analytics API credentials below
+client_id = st.secrets["youtube"]["client_id"]
+client_secret = st.secrets["youtube"]["client_secret"]
+refresh_token = st.secrets["youtube"]["refresh_token"]
+
+ACCESS_TOKEN = get_access_token(client_id, client_secret, refresh_token)
 
 # =========================
 # 1. CHANNEL OVERVIEW METRICS
