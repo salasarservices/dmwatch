@@ -1518,11 +1518,11 @@ def get_auth_headers(access_token):
 
 def get_date_ranges():
     """Gets start and end dates for current and previous period (monthly granularity)."""
-    today = datetime.date.today()
+    today = date.today()
     start_cur = today.replace(day=1)
     end_cur = today
-    start_prev = (start_cur - datetime.timedelta(days=1)).replace(day=1)
-    end_prev = start_cur - datetime.timedelta(days=1)
+    start_prev = (start_cur - timedelta(days=1)).replace(day=1)
+    end_prev = start_cur - timedelta(days=1)
     return start_cur, end_cur, start_prev, end_prev
 
 # Read credentials from Streamlit secrets
