@@ -1,3 +1,19 @@
+from google_auth_oauthlib.flow import InstalledAppFlow
+
+SCOPES = [
+    "https://www.googleapis.com/auth/yt-analytics.readonly",
+    "https://www.googleapis.com/auth/youtube.readonly"
+]
+
+# Launches browser for consent, saves credentials locally
+flow = InstalledAppFlow.from_client_secrets_file(
+    'client_secret.json', SCOPES
+)
+creds = flow.run_local_server(port=0)
+
+print("Access Token:", creds.token)
+print("Refresh Token:", creds.refresh_token)
+
 import requests
 
 def get_access_token(client_id, client_secret, refresh_token):
