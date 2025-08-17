@@ -13,6 +13,7 @@ from fpdf import FPDF
 import requests
 from PIL import Image
 import pycountry
+import plotly.express as px
 import json
 from pymongo import MongoClient
 from streamlit_js_eval import streamlit_js_eval
@@ -1530,11 +1531,16 @@ client_id = st.secrets["youtube"].get("client_id", "YOUR_CLIENT_ID")
 client_secret = st.secrets["youtube"].get("client_secret", "YOUR_CLIENT_SECRET")
 refresh_token = st.secrets["youtube"].get("refresh_token", "YOUR_REFRESH_TOKEN")
 
+# Obtain access token dynamically
 ACCESS_TOKEN = get_access_token(client_id, client_secret, refresh_token)
 
 # =========================
 # 1. CHANNEL OVERVIEW METRICS
 # =========================
+
+YOUTUBE_API_KEY = st.secrets["youtube"].get("api_key", "YOUR_API_KEY")
+CHANNEL_ID = st.secrets["youtube"].get("channel_id", "YOUR_CHANNEL_ID")
+
 def get_channel_stats():
     # Get channel statistics (subscribers, total views, video count)
     url = f"https://www.googleapis.com/youtube/v3/channels?part=statistics&id={CHANNEL_ID}&key={YOUTUBE_API_KEY}"
@@ -1556,7 +1562,7 @@ def get_yt_analytics_overview(start_date, end_date):
         "metrics": "views,estimatedMinutesWatched,subscribersGained,subscribersLost",
         "dimensions": "day",
     }
-    resp = requests.get(endpoint, headers=get_auth_headers(), params=params).json()
+    resp = requests.get(endpoint, headers=get_auth_headers(ACCESS_TOKEN), params=params).json()
     # Aggregate totals
     if "rows" not in resp:
         return {"views": 0, "watch_time": 0, "subs_gained": 0, "subs_lost": 0}
@@ -1670,10 +1676,11 @@ def get_top_videos(start_date, end_date, max_results=5):
         "dimensions": "video",
         "filters": f"video=={','.join(ids)}"
     }
-    resp = requests.get(endpoint, headers=get_auth_headers(), params=params).json()
+    resp = requests.get(endpoint, headers=get_auth_headers(ACCESS_TOKEN), params=params).json()
     if "rows" not in resp:
         df["watch_time"] = 0
     else:
+        # rows: [video_id, estimatedMinutesWatched, views, likes, comments]
         wt_dict = {row[0]: row[1] for row in resp["rows"]}
         df["watch_time"] = df["id"].map(wt_dict).fillna(0)
     return df
@@ -1712,7 +1719,7 @@ def get_traffic_sources(start_date, end_date):
         "metrics": "views",
         "dimensions": "insightTrafficSourceType",
     }
-    resp = requests.get(endpoint, headers=get_auth_headers(), params=params).json()
+    resp = requests.get(endpoint, headers=get_auth_headers(ACCESS_TOKEN), params=params).json()
     if "rows" not in resp:
         return pd.DataFrame()
     df = pd.DataFrame(resp["rows"], columns=[c["name"] for c in resp["columnHeaders"]])
@@ -1747,7 +1754,7 @@ def get_trends_over_time(start_date, end_date):
         "metrics": "views,estimatedMinutesWatched,subscribersGained,subscribersLost",
         "dimensions": "day",
     }
-    resp = requests.get(endpoint, headers=get_auth_headers(), params=params).json()
+    resp = requests.get(endpoint, headers=get_auth_headers(ACCESS_TOKEN), params=params).json()
     if "rows" not in resp:
         return pd.DataFrame()
     df = pd.DataFrame(resp["rows"], columns=[c["name"] for c in resp["columnHeaders"]])
@@ -1758,7 +1765,7 @@ def get_trends_over_time(start_date, end_date):
     return df
 
 # Fetch trend data for the last 60 days for richer chart
-trend_df = get_trends_over_time(start_cur - datetime.timedelta(days=59), end_cur)
+trend_df = get_trends_over_time(start_cur - timedelta(days=59), end_cur)
 
 # =========================
 # DESIGN: TRENDS OVER TIME ROW
@@ -1786,24 +1793,21 @@ else:
 # =========================
 st.caption("All YouTube metrics are updated live from YouTube Data & Analytics APIs. Credentials are loaded securely from Streamlit secrets.")
 
-st.caption("All data is pulled live from Instagram Graph API. Tokens and IDs are loaded securely from Streamlit secrets.")
 # END OF DASHBOARD
-from google_auth_oauthlib.flow import InstalledAppFlow
 
-# Required scopes for YouTube Data and Analytics APIs
-SCOPES = [
-    "https://www.googleapis.com/auth/youtube.readonly",
-    "https://www.googleapis.com/auth/yt-analytics.readonly"
-]
+# OAuth flow helper (used only for generating refresh tokens, not for dashboard execution)
+# Uncomment/run locally as needed to generate your tokens, then update .streamlit/secrets.toml
 
-# Run the OAuth2 flow, will open a browser for consent
-flow = InstalledAppFlow.from_client_secrets_file(
-    'client_secret.json', SCOPES
-)
-creds = flow.run_local_server(port=0)
-
-print("Access token:", creds.token)
-print("Refresh token:", creds.refresh_token)
-print("Client ID:", creds.client_id)
-print("Client Secret:", creds.client_secret)
-
+# from google_auth_oauthlib.flow import InstalledAppFlow
+# SCOPES = [
+#     "https://www.googleapis.com/auth/youtube.readonly",
+#     "https://www.googleapis.com/auth/yt-analytics.readonly"
+# ]
+# flow = InstalledAppFlow.from_client_secrets_file(
+#     'client_secret.json', SCOPES
+# )
+# creds = flow.run_local_server(port=0)
+# print("Access token:", creds.token)
+# print("Refresh token:", creds.refresh_token)
+# print("Client ID:", creds.client_id)
+# print("Client Secret:", creds.client_secret)
