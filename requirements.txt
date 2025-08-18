@@ -4,6 +4,7 @@ google-auth
 google-auth-oauthlib
 google-analytics-data
 pandas
+tabulate
 streamlit-authenticator
 python-dateutil
 fpdf
