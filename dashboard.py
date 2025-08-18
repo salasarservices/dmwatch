@@ -1787,4 +1787,40 @@ else:
 # =========================
 st.caption("All YouTube metrics are updated live from YouTube Data & Analytics APIs. Credentials are loaded securely from Streamlit secrets.")
 
+# =========================
+# DEBUGGING
+# =========================
+def get_yt_analytics_summary(start_date, end_date):
+    endpoint = "https://youtubeanalytics.googleapis.com/v2/reports"
+    params = {
+        "ids": "channel==MINE",  # Try replacing with f"channel=={CHANNEL_ID}" if this fails
+        "startDate": start_date.strftime("%Y-%m-%d"),
+        "endDate": end_date.strftime("%Y-%m-%d"),
+        "metrics": "views,estimatedMinutesWatched,subscribersGained,subscribersLost",
+        "dimensions": "",
+    }
+    resp = requests.get(endpoint, headers=get_auth_headers(ACCESS_TOKEN), params=params)
+    
+    # --- DEBUGGING SNIPPET START ---
+    st.write("YouTube Analytics API Request URL:", resp.url)
+    st.write("Status Code:", resp.status_code)
+    try:
+        api_response = resp.json()
+    except Exception as e:
+        st.write("API response is not JSON:", resp.text)
+        return {"views": 0, "watch_time": 0, "subs_gained": 0, "subs_lost": 0}
+    st.write("YouTube Analytics API Raw Response:", api_response)
+    # --- DEBUGGING SNIPPET END ---
+    
+    if "rows" not in api_response:
+        return {"views": 0, "watch_time": 0, "subs_gained": 0, "subs_lost": 0}
+    row = api_response["rows"][0]
+    col_map = {c["name"]: i for i, c in enumerate(api_response["columnHeaders"])}
+    return {
+        "views": int(row[col_map["views"]]),
+        "watch_time": int(row[col_map["estimatedMinutesWatched"]]),
+        "subs_gained": int(row[col_map["subscribersGained"]]),
+        "subs_lost": int(row[col_map["subscribersLost"]]),
+    }
+
 # END OF DASHBOARD
