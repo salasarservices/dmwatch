@@ -6,6 +6,7 @@ from google.auth.transport.requests import Request as GAuthRequest
 from google_auth_oauthlib.flow import InstalledAppFlow
 from datetime import datetime, date, timedelta
 from dateutil.relativedelta import relativedelta
+import streamlit_authenticator as stauth
 import pandas as pd
 import time
 import io
@@ -74,6 +75,9 @@ def show_loader(placeholder, message="Loading..."):
 # =========================
 # LOGIN FUNCTION
 # =========================
+
+hashed_password = stauth.Hasher(['salad@2025']).generate()
+print(hashed_password)
 
 USERNAME = st.secrets["login"]["username"]
 PASSWORD = st.secrets["login"]["password"]
