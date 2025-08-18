@@ -1710,7 +1710,7 @@ for i, col in enumerate(overview_cols):
 # 2. TOP 5 VIDEOS SECTION
 # =========================
 
-# HYPERLINK THE VIDEO TITLE
+# Only hyperlink the Title column (not the entire table format)
 
 def get_top_videos(start_date, end_date, max_results=5):
     video_url = f"https://www.googleapis.com/youtube/v3/search?key={YOUTUBE_API_KEY}&channelId={CHANNEL_ID}&part=id&order=date&type=video&maxResults=50"
@@ -1728,7 +1728,14 @@ def get_top_videos(start_date, end_date, max_results=5):
         views = int(item["statistics"].get("viewCount", 0))
         likes = int(item["statistics"].get("likeCount", 0))
         comments = int(item["statistics"].get("commentCount", 0))
-        data.append({"id": vid_id, "title": title, "published": published, "views": views, "likes": likes, "comments": comments})
+        data.append({
+            "id": vid_id,
+            "title": title,
+            "published": published,
+            "views": views,
+            "likes": likes,
+            "comments": comments
+        })
     df = pd.DataFrame(data).sort_values("views", ascending=False).head(max_results)
     ids = list(df["id"])
     if not ids:
@@ -1763,16 +1770,17 @@ if not top_videos_df.empty:
     </style>
     """, unsafe_allow_html=True)
     
-    # Add hyperlink to the title
-    display_df = top_videos_df.copy()
-    display_df['Title'] = display_df.apply(
-        lambda row: f"[{row['title']}](https://www.youtube.com/watch?v={row['id']})", axis=1
-    )
-    display_df = display_df[["Title", "views", "watch_time", "likes", "comments"]]
+    display_df = top_videos_df[["title", "views", "watch_time", "likes", "comments"]].copy()
     display_df.columns = ["Title", "Views", "Watch Time (min)", "Likes", "Comments"]
-    
-    # Show as markdown table for clickable links
-    st.markdown(display_df.to_markdown(index=False), unsafe_allow_html=True)
+    # Hyperlink only the Title column
+    display_df["Title"] = [
+        f'<a href="https://www.youtube.com/watch?v={vid_id}" target="_blank">{title}</a>'
+        for title, vid_id in zip(display_df["Title"], top_videos_df["id"])
+    ]
+    st.markdown(
+        display_df.to_html(escape=False, index=False, classes="yt-table"),
+        unsafe_allow_html=True
+    )
 else:
     st.info("No video data found for this period.")
 
