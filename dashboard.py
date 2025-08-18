@@ -1488,6 +1488,12 @@ else:
 st.caption("All data is pulled live from Facebook Graph API. Tokens and IDs are loaded securely from Streamlit secrets.")
 
 
+import streamlit as st
+import pandas as pd
+import requests
+from datetime import date, timedelta
+import plotly.express as px
+
 # =========================
 # YOUTUBE API CONFIGURATION
 # =========================
@@ -1518,12 +1524,12 @@ def get_auth_headers(access_token):
     return {"Authorization": f"Bearer {access_token}", "Accept": "application/json"}
 
 def get_date_ranges():
-    """Gets start and end dates for current and previous period (monthly granularity)."""
+    """Gets start and end dates for current and previous period (last 28 days granularity)."""
     today = date.today()
-    start_cur = today.replace(day=1)
     end_cur = today
-    start_prev = (start_cur - timedelta(days=1)).replace(day=1)
+    start_cur = today - timedelta(days=27)
     end_prev = start_cur - timedelta(days=1)
+    start_prev = end_prev - timedelta(days=27)
     return start_cur, end_cur, start_prev, end_prev
 
 # Read credentials from Streamlit secrets
@@ -1534,61 +1540,49 @@ refresh_token = st.secrets["youtube"].get("refresh_token", "YOUR_REFRESH_TOKEN")
 # Obtain access token dynamically
 ACCESS_TOKEN = get_access_token(client_id, client_secret, refresh_token)
 
+YOUTUBE_API_KEY = st.secrets["youtube"].get("api_key", "YOUR_API_KEY")
+CHANNEL_ID = st.secrets["youtube"].get("channel_id", "YOUR_CHANNEL_ID")
+
 # =========================
 # 1. CHANNEL OVERVIEW METRICS
 # =========================
 
-YOUTUBE_API_KEY = st.secrets["youtube"].get("api_key", "YOUR_API_KEY")
-CHANNEL_ID = st.secrets["youtube"].get("channel_id", "YOUR_CHANNEL_ID")
-
-def get_channel_stats():
-    # Get channel statistics (subscribers, total views, video count)
-    url = f"https://www.googleapis.com/youtube/v3/channels?part=statistics&id={CHANNEL_ID}&key={YOUTUBE_API_KEY}"
-    resp = requests.get(url).json()
-    stats = resp["items"][0]["statistics"]
-    return {
-        "subs": int(stats.get("subscriberCount", 0)),
-        "views": int(stats.get("viewCount", 0)),
-        "video_count": int(stats.get("videoCount", 0)),
-    }
-
-def get_yt_analytics_overview(start_date, end_date):
-    # Get watch time and views for the given period using YouTube Analytics API
+def get_yt_analytics_summary(start_date, end_date):
     endpoint = "https://youtubeanalytics.googleapis.com/v2/reports"
     params = {
         "ids": "channel==MINE",
         "startDate": start_date.strftime("%Y-%m-%d"),
         "endDate": end_date.strftime("%Y-%m-%d"),
         "metrics": "views,estimatedMinutesWatched,subscribersGained,subscribersLost",
-        "dimensions": "day",
+        "dimensions": "",
     }
     resp = requests.get(endpoint, headers=get_auth_headers(ACCESS_TOKEN), params=params).json()
-    # Aggregate totals
+    # API returns a single row with totals if dimensions is blank
     if "rows" not in resp:
         return {"views": 0, "watch_time": 0, "subs_gained": 0, "subs_lost": 0}
-    df = pd.DataFrame(resp["rows"], columns=[c["name"] for c in resp["columnHeaders"]])
-    totals = {
-        "views": int(df["views"].sum()),
-        "watch_time": int(df["estimatedMinutesWatched"].sum()),
-        "subs_gained": int(df["subscribersGained"].sum()),
-        "subs_lost": int(df["subscribersLost"].sum()),
+    row = resp["rows"][0]
+    col_map = {c["name"]: i for i, c in enumerate(resp["columnHeaders"])}
+    return {
+        "views": int(row[col_map["views"]]),
+        "watch_time": int(row[col_map["estimatedMinutesWatched"]]),
+        "subs_gained": int(row[col_map["subscribersGained"]]),
+        "subs_lost": int(row[col_map["subscribersLost"]]),
     }
-    return totals
 
 def get_delta(current, previous):
     return (current - previous) / previous * 100 if previous else 0
 
-# Fetch date ranges for analytics
+# Fetch date ranges for analytics (last 28 days vs previous 28 days)
 start_cur, end_cur, start_prev, end_prev = get_date_ranges()
 
 # Fetch current and previous period analytics
-overview_cur = get_yt_analytics_overview(start_cur, end_cur)
-overview_prev = get_yt_analytics_overview(start_prev, end_prev)
-channel_stats = get_channel_stats()
+overview_cur = get_yt_analytics_summary(start_cur, end_cur)
+overview_prev = get_yt_analytics_summary(start_prev, end_prev)
 
 # Compute deltas
-subs_delta = get_delta(overview_cur["subs_gained"] - overview_cur["subs_lost"],
-                       overview_prev["subs_gained"] - overview_prev["subs_lost"])
+subs_current_net = overview_cur["subs_gained"] - overview_cur["subs_lost"]
+subs_prev_net = overview_prev["subs_gained"] - overview_prev["subs_lost"]
+subs_delta = get_delta(subs_current_net, subs_prev_net)
 views_delta = get_delta(overview_cur["views"], overview_prev["views"])
 watch_delta = get_delta(overview_cur["watch_time"], overview_prev["watch_time"])
 
@@ -1600,7 +1594,7 @@ overview_cols = st.columns(3)
 overview_metrics = [
     {
         "label": "Subscribers (Net)",
-        "value": overview_cur["subs_gained"] - overview_cur["subs_lost"],
+        "value": subs_current_net,
         "delta": subs_delta,
         "color": "#e67e22"
     },
@@ -1633,7 +1627,7 @@ for i, col in enumerate(overview_cols):
                 </div>
             </div>
             <div style='text-align:center; font-size:15px; margin-top:0.3em; color:{delta_col}; font-weight:500'>
-                {delta_sym} {abs(metric["delta"]):.2f}% <span style='color:#666;'>(vs previous month)</span>
+                {delta_sym} {abs(metric["delta"]):.2f}% <span style='color:#666;'>(vs previous 28 days)</span>
             </div>
             """,
             unsafe_allow_html=True
@@ -1794,20 +1788,3 @@ else:
 st.caption("All YouTube metrics are updated live from YouTube Data & Analytics APIs. Credentials are loaded securely from Streamlit secrets.")
 
 # END OF DASHBOARD
-
-# OAuth flow helper (used only for generating refresh tokens, not for dashboard execution)
-# Uncomment/run locally as needed to generate your tokens, then update .streamlit/secrets.toml
-
-# from google_auth_oauthlib.flow import InstalledAppFlow
-# SCOPES = [
-#     "https://www.googleapis.com/auth/youtube.readonly",
-#     "https://www.googleapis.com/auth/yt-analytics.readonly"
-# ]
-# flow = InstalledAppFlow.from_client_secrets_file(
-#     'client_secret.json', SCOPES
-# )
-# creds = flow.run_local_server(port=0)
-# print("Access token:", creds.token)
-# print("Refresh token:", creds.refresh_token)
-# print("Client ID:", creds.client_id)
-# print("Client Secret:", creds.client_secret)
