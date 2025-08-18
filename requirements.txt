@@ -4,6 +4,7 @@ google-auth
 google-auth-oauthlib
 google-analytics-data
 pandas
+stauth
 python-dateutil
 fpdf
 requests
