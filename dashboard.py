@@ -1550,7 +1550,7 @@ CHANNEL_ID = st.secrets["youtube"].get("channel_id", "YOUR_CHANNEL_ID")
 def get_yt_analytics_summary(start_date, end_date):
     endpoint = "https://youtubeanalytics.googleapis.com/v2/reports"
     params = {
-        "ids": "channel==MINE",
+        "ids": "channel==UCf67l7_C_Brciv-CUhF0QwQ",
         "startDate": start_date.strftime("%Y-%m-%d"),
         "endDate": end_date.strftime("%Y-%m-%d"),
         "metrics": "views,estimatedMinutesWatched,subscribersGained,subscribersLost",
