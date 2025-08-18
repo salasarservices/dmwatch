@@ -1631,26 +1631,56 @@ net_new = subs_gained - subs_lost
 
 subs_text = get_new_subs_text(subs_gained, subs_lost)
 
+def get_delta_text(current, previous):
+    delta = current - previous
+    if previous == 0:
+        percent = 0
+    else:
+        percent = delta / previous * 100
+    if delta > 0:
+        color = "#2ecc40"  # green
+        sign = "+"
+        text = f"<span style='color:{color}; font-weight:bold;'>{sign}{delta} ({percent:.1f}%)</span>"
+    elif delta < 0:
+        color = "#ff4136"  # red
+        sign = "-"
+        text = f"<span style='color:{color}; font-weight:bold;'>{sign}{abs(delta)} ({percent:.1f}%)</span>"
+    else:
+        color = "#888"
+        text = f"<span style='color:{color}; font-weight:bold;'>0</span>"
+    return text
+
+# ...rest of your setup...
+
+# Compute deltas
+subs_current_net = overview_cur["subs_gained"] - overview_cur["subs_lost"]
+subs_prev_net = overview_prev["subs_gained"] - overview_prev["subs_lost"]
+views_delta = overview_cur["views"] - overview_prev["views"]
+watch_delta = overview_cur["watch_time"] - overview_prev["watch_time"]
+
 overview_metrics = [
     {
         "label": "Subscribers (Net)",
         "value": total_subscribers,
-        "subs_text": subs_text,
+        "subs_text": get_new_subs_text(overview_cur["subs_gained"], overview_cur["subs_lost"]),
+        "delta_text": "",
         "color": "#ffe1c8",  # pastel orange
         "circle_color": "#e67e22",
     },
     {
         "label": "Total Views",
         "value": overview_cur["views"],
-        "subs_text": None,
-        "color": "#c8e6fa",  # pastel blue
+        "subs_text": "",
+        "delta_text": get_delta_text(overview_cur["views"], overview_prev["views"]),
+        "color": "#c8e6fa",
         "circle_color": "#3498db",
     },
     {
         "label": "Watch Time (min)",
         "value": overview_cur["watch_time"],
-        "subs_text": None,
-        "color": "#a7f1df",  # pastel teal
+        "subs_text": "",
+        "delta_text": get_delta_text(overview_cur["watch_time"], overview_prev["watch_time"]),
+        "color": "#a7f1df",
         "circle_color": "#16a085",
     },
 ]
@@ -1669,7 +1699,7 @@ for i, col in enumerate(overview_cols):
                 </div>
             </div>
             <div style='text-align:center; font-size:16px; margin-top:0.3em; min-height:1.5em;'>
-                {metric["subs_text"] if metric["subs_text"] else ""}
+                {metric["subs_text"] if metric["subs_text"] else metric["delta_text"]}
             </div>
             """,
             unsafe_allow_html=True
