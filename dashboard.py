@@ -76,9 +76,6 @@ def show_loader(placeholder, message="Loading..."):
 # LOGIN FUNCTION
 # =========================
 
-hashed_password = stauth.Hasher(['salad@2025']).generate()
-print(hashed_password)
-
 USERNAME = st.secrets["login"]["username"]
 PASSWORD = st.secrets["login"]["password"]
 
