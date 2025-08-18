@@ -1707,8 +1707,16 @@ for i, col in enumerate(overview_cols):
         )
 
 # =========================
-# 2. TOP 5 VIDEOS SECTION (unchanged)
+# 2. TOP 5 VIDEOS SECTION
 # =========================
+
+# HYPERLINK THE VIDEO TITLE
+
+st.markdown("### Top 5 Videos (Current Period)")
+for video in top_videos:
+    url = f"https://www.youtube.com/watch?v={video['video_id']}"
+    st.markdown(f"- [{video['title']}]({url})")
+    
 def get_top_videos(start_date, end_date, max_results=5):
     video_url = f"https://www.googleapis.com/youtube/v3/search?key={YOUTUBE_API_KEY}&channelId={CHANNEL_ID}&part=id&order=date&type=video&maxResults=50"
     resp = requests.get(video_url).json()
