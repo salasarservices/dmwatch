@@ -1712,11 +1712,6 @@ for i, col in enumerate(overview_cols):
 
 # HYPERLINK THE VIDEO TITLE
 
-st.markdown("### Top 5 Videos (Current Period)")
-for video in top_videos:
-    url = f"https://www.youtube.com/watch?v={video['video_id']}"
-    st.markdown(f"- [{video['title']}]({url})")
-    
 def get_top_videos(start_date, end_date, max_results=5):
     video_url = f"https://www.googleapis.com/youtube/v3/search?key={YOUTUBE_API_KEY}&channelId={CHANNEL_ID}&part=id&order=date&type=video&maxResults=50"
     resp = requests.get(video_url).json()
@@ -1767,9 +1762,17 @@ if not top_videos_df.empty:
     .yt-table tr:nth-child(odd) {background: #fff;}
     </style>
     """, unsafe_allow_html=True)
-    display_df = top_videos_df[["title", "views", "watch_time", "likes", "comments"]].copy()
+    
+    # Add hyperlink to the title
+    display_df = top_videos_df.copy()
+    display_df['Title'] = display_df.apply(
+        lambda row: f"[{row['title']}](https://www.youtube.com/watch?v={row['id']})", axis=1
+    )
+    display_df = display_df[["Title", "views", "watch_time", "likes", "comments"]]
     display_df.columns = ["Title", "Views", "Watch Time (min)", "Likes", "Comments"]
-    st.markdown(display_df.to_html(index=False, classes="yt-table"), unsafe_allow_html=True)
+    
+    # Show as markdown table for clickable links
+    st.markdown(display_df.to_markdown(index=False), unsafe_allow_html=True)
 else:
     st.info("No video data found for this period.")
 
