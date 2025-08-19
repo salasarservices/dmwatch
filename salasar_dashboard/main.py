@@ -4,24 +4,30 @@ from components.sidebar import get_sidebar_selection
 # Set page config for wide layout and custom heading
 st.set_page_config(page_title="Salasar Digital Marketing Dashboard", layout="wide")
 
+# --- SESSION STATE INITIALIZATION ---
+# Always initialize session state keys before use
+if "sidebar_menu" not in st.session_state:
+    st.session_state["sidebar_menu"] = "WEBSITE ANALYTICS"  # Default menu
+
 # Main heading
 st.markdown(
     "<h1 style='text-align: center; margin-bottom: 2rem;'>Salasar Digital Marketing Dashboard</h1>",
     unsafe_allow_html=True
 )
 
-# On first load or refresh, default to 'WEBSITE ANALYTICS'
-if "menu_default" not in st.session_state:
-    st.session_state["menu_default"] = "WEBSITE ANALYTICS"
+# --- SIDEBAR SELECTION ---
+# Get sidebar selection states, passing the default from session state
+menu, social_media_option, flush_clicked = get_sidebar_selection(default=st.session_state["sidebar_menu"])
 
-# Get sidebar selection states, passing the default
-menu, social_media_option, flush_clicked = get_sidebar_selection(default=st.session_state["menu_default"])
+# If menu selection has changed, update session state
+if menu != st.session_state["sidebar_menu"]:
+    st.session_state["sidebar_menu"] = menu
 
-# Handle Flush Mongo button (implement your logic here)
+# --- FLUSH MONGO BUTTON ---
 if flush_clicked:
     st.success("MongoDB cache cleared!")  # Replace with your cache clearing logic
 
-# WEBSITE ANALYTICS (all analytics displayed in a single page)
+# --- MAIN DASHBOARD LOGIC ---
 if menu == "WEBSITE ANALYTICS":
     st.subheader("Website Analytics")
     st.markdown("### Website Performance")
@@ -39,7 +45,6 @@ if menu == "WEBSITE ANALYTICS":
     st.markdown("### Active Users by Country (Top 5) + Traffic Acquisition by Channel")
     # ... (Insert Active Users by Country and Traffic Acquisition by Channel code)
 
-# LEADS DASHBOARD (all leads data in a single page)
 elif menu == "LEADS DASHBOARD":
     st.subheader("Leads Dashboard")
     st.markdown("### Leads Dashboard")
@@ -48,20 +53,16 @@ elif menu == "LEADS DASHBOARD":
     st.markdown("### Leads Data")
     # ... (Insert Leads Data code)
 
-# SOCIAL MEDIA ANALYTICS (drop-down, individual reports)
 elif menu == "SOCIAL MEDIA ANALYTICS" and social_media_option:
     if social_media_option == "Linkedin Analytics":
         st.subheader("Linkedin Analytics")
         # ... (Insert Linkedin Analytics code)
-
     elif social_media_option == "Facebook Page Analytics":
         st.subheader("Facebook Page Analytics")
         # ... (Insert Facebook Page Analytics code)
-
     elif social_media_option == "Instagram Analytics":
         st.subheader("Instagram Analytics")
         # ... (Insert Instagram Analytics code)
-
     elif social_media_option == "YouTube Channel Overview":
         st.subheader("YouTube Channel Overview")
         st.markdown("### Top 5 Videos")
@@ -71,7 +72,6 @@ elif menu == "SOCIAL MEDIA ANALYTICS" and social_media_option:
         st.markdown("### Trends Over Time")
         # ... (Insert Trends Over Time code)
 
-# Fallback info message (optional)
 else:
     st.info("Select a report from the sidebar to get started.")
 
