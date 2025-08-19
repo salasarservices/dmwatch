@@ -1,5 +1,5 @@
 import streamlit as st
-from salasar_dashboard.sidebar import get_sidebar_selection
+from salasar_dashboard.components.sidebar import get_sidebar_selection
 
 # Set page config for wide layout and custom heading
 st.set_page_config(page_title="Salasar Digital Marketing Dashboard", layout="wide")
