@@ -1,2 +1,39 @@
-# TODO: Add Python dependencies
-streamlit
+# Core app framework
+streamlit>=1.25.0
+
+# Google APIs and authentication
+google-api-python-client>=2.100.0
+google-auth>=2.20.0
+google-auth-oauthlib>=1.2.0
+google-analytics-data>=0.13.0
+
+# Data manipulation and utilities
+pandas>=2.0.0
+python-dateutil>=2.8.0
+tabulate>=0.9.0
+
+# Streamlit authentication
+streamlit-authenticator>=0.2.3
+
+# PDF and image handling
+fpdf>=1.7.2
+Pillow>=10.0.0
+
+# HTTP requests
+requests>=2.31.0
+
+# Visualization
+plotly>=5.20.0
+
+# Country info
+pycountry>=22.3.5
+
+# Google Sheets
+gspread>=6.0.0
+
+# MongoDB
+pymongo>=4.0.0
+dnspython>=2.0.0
+
+# Streamlit JS evaluation (for advanced custom components)
+streamlit-js-eval>=0.1.0
