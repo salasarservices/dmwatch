@@ -7,9 +7,9 @@ from pymongo import MongoClient
 def get_credentials(scopes):
     sa = st.secrets['gcp']['service_account']
     info = json.loads(sa)
-    pk = info.get('private_key', '').replace('\\n', '\\n')
-    if not pk.endswith('\\n'):
-        pk += '\\n'
+    pk = info.get('private_key', '').replace('\\n', '\n')
+    if not pk.endswith('\n'):
+        pk += '\n'
     info['private_key'] = pk
     creds = service_account.Credentials.from_service_account_info(info, scopes=scopes)
     creds.refresh(GAuthRequest())
