@@ -1,5 +1,5 @@
 import streamlit as st
-from salasar_dashboard.components.sidebar import get_sidebar_selection
+from components.sidebar import get_sidebar_selection
 
 menu, social_media_option, flush_clicked = get_sidebar_selection()
 
