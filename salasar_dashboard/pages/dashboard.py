@@ -5,17 +5,17 @@ import time
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from googleapiclient.discovery import build
 
-from salasar_dashboard.components.loader import show_loader
-from salasar_dashboard.components.login import check_login
-from salasar_dashboard.components.sidebar import render_sidebar
-from salasar_dashboard.components.pdf_report import generate_pdf_report
+from components.loader import show_loader
+from components.login import check_login
+from components.sidebar import render_sidebar
+from components.pdf_report import generate_pdf_report
 
-from salasar_dashboard.utils.auth import get_credentials
-from salasar_dashboard.utils.analytics import (
+from utils.auth import get_credentials
+from utils.analytics import (
     get_total_users, get_traffic, get_search_console,
     get_active_users_by_country, get_new_returning_users
 )
-from salasar_dashboard.utils.formatters import (
+from utils.formatters import (
     pct_change, get_month_options, get_month_range, format_month_year
 )
 
