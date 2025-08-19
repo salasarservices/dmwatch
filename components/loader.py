@@ -1,1 +1,0 @@
-# Loader UI component
