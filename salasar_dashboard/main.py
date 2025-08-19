@@ -16,22 +16,22 @@ if flush_clicked:
 
 # --- MAIN DASHBOARD LOGIC ---
 if menu == "WEBSITE ANALYTICS":
-    import salasar_dashboard.pages.dashboard
+    import pages.dashboard
     # The dashboard page will render itself
 
 elif menu == "LEADS DASHBOARD":
-    import salasar_dashboard.pages.leads_dashboard
+    import pages.leads_dashboard
     # The leads dashboard page will render itself
 
 elif menu == "SOCIAL MEDIA ANALYTICS" and social_media_option:
     if social_media_option == "Linkedin Analytics":
-        import salasar_dashboard.pages.social_media_linkedin
+        import pages.social_media_linkedin
     elif social_media_option == "Facebook Page Analytics":
-        import salasar_dashboard.pages.social_media_facebook
+        import pages.social_media_facebook
     elif social_media_option == "Instagram Analytics":
-        import salasar_dashboard.pages.social_media_instagram
+        import pages.social_media_instagram
     elif social_media_option == "YouTube Channel Overview":
-        import salasar_dashboard.pages.social_media_youtube
+        import pages.social_media_youtube
 
 else:
     st.info("Select a report from the sidebar to get started.")
