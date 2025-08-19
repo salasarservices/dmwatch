@@ -10,7 +10,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Set default sidebar selection to 'WEBSITE ANALYTICS' on first load or refresh
+# On first load or refresh, default to 'WEBSITE ANALYTICS'
 if "menu_default" not in st.session_state:
     st.session_state["menu_default"] = "WEBSITE ANALYTICS"
 
@@ -21,10 +21,9 @@ menu, social_media_option, flush_clicked = get_sidebar_selection(default=st.sess
 if flush_clicked:
     st.success("MongoDB cache cleared!")  # Replace with your cache clearing logic
 
-# WEBSITE ANALYTICS
+# WEBSITE ANALYTICS (all analytics displayed in a single page)
 if menu == "WEBSITE ANALYTICS":
     st.subheader("Website Analytics")
-    # Place all relevant analytics here
     st.markdown("### Website Performance")
     # ... (Insert Website Performance code)
 
@@ -37,13 +36,10 @@ if menu == "WEBSITE ANALYTICS":
     st.markdown("### New vs Returning Users")
     # ... (Insert New vs Returning Users code)
 
-    st.markdown("### Active Users by Country (Top 5)")
-    # ... (Insert Active Users by Country code)
+    st.markdown("### Active Users by Country (Top 5) + Traffic Acquisition by Channel")
+    # ... (Insert Active Users by Country and Traffic Acquisition by Channel code)
 
-    st.markdown("### Traffic Acquisition by Channel")
-    # ... (Insert Traffic Acquisition by Channel code)
-
-# LEADS DASHBOARD
+# LEADS DASHBOARD (all leads data in a single page)
 elif menu == "LEADS DASHBOARD":
     st.subheader("Leads Dashboard")
     st.markdown("### Leads Dashboard")
@@ -52,7 +48,7 @@ elif menu == "LEADS DASHBOARD":
     st.markdown("### Leads Data")
     # ... (Insert Leads Data code)
 
-# SOCIAL MEDIA ANALYTICS
+# SOCIAL MEDIA ANALYTICS (drop-down, individual reports)
 elif menu == "SOCIAL MEDIA ANALYTICS" and social_media_option:
     if social_media_option == "Linkedin Analytics":
         st.subheader("Linkedin Analytics")
@@ -75,7 +71,7 @@ elif menu == "SOCIAL MEDIA ANALYTICS" and social_media_option:
         st.markdown("### Trends Over Time")
         # ... (Insert Trends Over Time code)
 
-# Optionally, provide a message if nothing is selected (edge case)
+# Fallback info message (optional)
 else:
     st.info("Select a report from the sidebar to get started.")
 
