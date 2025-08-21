@@ -23,13 +23,13 @@ def sidebar_menu():
         if st.button("Linkedin Analytics", key="linkedin_btn"):
             st.session_state["main_menu"] = "SOCIAL MEDIA ANALYTICS"
             st.session_state["social_sub_menu"] = "Linkedin Analytics"
-        if st.button("Facebook Page Analytics", key="facebook_btn"):
+        if st.button("Facebook Analytics", key="facebook_btn"):
             st.session_state["main_menu"] = "SOCIAL MEDIA ANALYTICS"
             st.session_state["social_sub_menu"] = "Facebook Page Analytics"
         if st.button("Instagram Analytics", key="instagram_btn"):
             st.session_state["main_menu"] = "SOCIAL MEDIA ANALYTICS"
             st.session_state["social_sub_menu"] = "Instagram Analytics"
-        if st.button("YouTube Channel Overview", key="youtube_btn"):
+        if st.button("YouTube Analytics", key="youtube_btn"):
             st.session_state["main_menu"] = "SOCIAL MEDIA ANALYTICS"
             st.session_state["social_sub_menu"] = "YouTube Channel Overview"
 
