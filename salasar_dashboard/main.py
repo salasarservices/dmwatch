@@ -5,7 +5,7 @@ import streamlit as st
 st.markdown("""
     <style>
     /* Style the sidebar nav items using the actual class */
-    .st-emotion-cache-1ag8dug en0apyo4 {
+    .st-emotion-cache-1ag8dug-en0apyo4 {
         text-transform: uppercase !important;
         font-weight: bold !important;
         color: #2d448d !important;
