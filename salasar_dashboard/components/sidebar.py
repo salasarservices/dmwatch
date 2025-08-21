@@ -1,52 +1,43 @@
 import streamlit as st
 
-def get_sidebar_selection():
-    # Session state initialization for menu and social option
-    if "sidebar_menu" not in st.session_state:
-        st.session_state["sidebar_menu"] = "WEBSITE ANALYTICS"
-    if "sidebar_social" not in st.session_state:
-        st.session_state["sidebar_social"] = "Linkedin Analytics"
+def sidebar_menu():
+    # Session state for menu and social sub-menu
+    if "main_menu" not in st.session_state:
+        st.session_state["main_menu"] = "WEBSITE ANALYTICS"
+    if "social_sub_menu" not in st.session_state:
+        st.session_state["social_sub_menu"] = "Linkedin Analytics"
 
     st.sidebar.title("Salasar Digital Marketing Dashboard")
 
-    # Main menu with radio buttons
-    menu = st.sidebar.radio(
-        "Select Dashboard",
-        ("WEBSITE ANALYTICS", "LEADS DASHBOARD", "SOCIAL MEDIA ANALYTICS"),
-        index=["WEBSITE ANALYTICS", "LEADS DASHBOARD", "SOCIAL MEDIA ANALYTICS"].index(
-            st.session_state["sidebar_menu"]
-        ),
-        key="sidebar_menu_radio"
-    )
-    st.session_state["sidebar_menu"] = menu
+    # WEBSITE ANALYTICS button
+    if st.sidebar.button("WEBSITE ANALYTICS", key="website_analytics_btn"):
+        st.session_state["main_menu"] = "WEBSITE ANALYTICS"
 
-    # Social media option if relevant
-    social_media_option = None
-    if menu == "SOCIAL MEDIA ANALYTICS":
-        # Only update the default for the selectbox from session state at the time of rendering
-        options = [
-            "Linkedin Analytics",
-            "Facebook Page Analytics",
-            "Instagram Analytics",
-            "YouTube Channel Overview"
-        ]
-        # Ensure the current session state value is valid, else fallback to first option
-        default_social = st.session_state.get("sidebar_social", options[0])
-        if default_social not in options:
-            default_social = options[0]
-        social_media_option = st.sidebar.selectbox(
-            "Social Media Platform",
-            options,
-            index=options.index(default_social),
-            key="sidebar_social_select"
-        )
-        st.session_state["sidebar_social"] = social_media_option
-    else:
-        # Clear social media session state if not in that menu, to avoid confusion
-        st.session_state["sidebar_social"] = "Linkedin Analytics"
-        social_media_option = None
+    # LEADS DASHBOARD button
+    if st.sidebar.button("LEADS DASHBOARD", key="leads_dashboard_btn"):
+        st.session_state["main_menu"] = "LEADS DASHBOARD"
 
-    # Flush cache button
-    flush_clicked = st.sidebar.button("Flush Mongo Cache", help="Clear cached data from MongoDB")
+    # SOCIAL MEDIA ANALYTICS dropdown
+    expander = st.sidebar.expander("SOCIAL MEDIA ANALYTICS", expanded=st.session_state["main_menu"] == "SOCIAL MEDIA ANALYTICS")
+    with expander:
+        if st.button("Linkedin Analytics", key="linkedin_btn"):
+            st.session_state["main_menu"] = "SOCIAL MEDIA ANALYTICS"
+            st.session_state["social_sub_menu"] = "Linkedin Analytics"
+        if st.button("Facebook Page Analytics", key="facebook_btn"):
+            st.session_state["main_menu"] = "SOCIAL MEDIA ANALYTICS"
+            st.session_state["social_sub_menu"] = "Facebook Page Analytics"
+        if st.button("Instagram Analytics", key="instagram_btn"):
+            st.session_state["main_menu"] = "SOCIAL MEDIA ANALYTICS"
+            st.session_state["social_sub_menu"] = "Instagram Analytics"
+        if st.button("YouTube Channel Overview", key="youtube_btn"):
+            st.session_state["main_menu"] = "SOCIAL MEDIA ANALYTICS"
+            st.session_state["social_sub_menu"] = "YouTube Channel Overview"
 
-    return menu, social_media_option, flush_clicked
+    # FLUSH MONGO button
+    flush_clicked = st.sidebar.button("Flush Mongo", key="flush_mongo_btn", help="Clear cached data from MongoDB")
+
+    # Return states
+    main_menu = st.session_state["main_menu"]
+    social_sub_menu = st.session_state["social_sub_menu"] if main_menu == "SOCIAL MEDIA ANALYTICS" else None
+
+    return main_menu, social_sub_menu, flush_clicked
