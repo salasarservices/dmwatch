@@ -1,5 +1,5 @@
 import streamlit as st
-from salasar_dashboard.components.sidebar import sidebar_menu
+from components.sidebar import sidebar_menu
 
 # Remove Streamlit's default navigation/sidebar, if any, by not using multipage or page_link features.
 # Use only the custom sidebar.
@@ -22,22 +22,22 @@ if flush_clicked:
 # --- MAIN DASHBOARD LOGIC ---
 if main_menu == "WEBSITE ANALYTICS":
     # Import and run website analytics dashboard (single page for all sections)
-    import salasar_dashboard.pages.dashboard
+    import pages.dashboard
 
 elif main_menu == "LEADS DASHBOARD":
     # Import and run leads dashboard (shows both dashboard and data)
-    import salasar_dashboard.pages.leads_dashboard
+    import pages.leads_dashboard
 
 elif main_menu == "SOCIAL MEDIA ANALYTICS":
     # Show the selected social media analytics page
     if social_sub_menu == "Linkedin Analytics":
-        import salasar_dashboard.pages.social_media_linkedin
+        import pages.social_media_linkedin
     elif social_sub_menu == "Facebook Page Analytics":
-        import salasar_dashboard.pages.social_media_facebook
+        import pages.social_media_facebook
     elif social_sub_menu == "Instagram Analytics":
-        import salasar_dashboard.pages.social_media_instagram
+        import pages.social_media_instagram
     elif social_sub_menu == "YouTube Channel Overview":
-        import salasar_dashboard.pages.social_media_youtube
+        import pages.social_media_youtube
 
 else:
     st.info("Select a report from the sidebar to get started.")
