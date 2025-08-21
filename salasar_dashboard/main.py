@@ -1,37 +1,6 @@
 import streamlit as st
 from components.sidebar import sidebar_menu
 
-st.markdown("""
-    <style>
-    /* Style for sidebar section titles */
-    section[data-testid="stSidebar"] .css-pkbazv {
-        text-transform: uppercase;
-        font-weight: bold;
-        color: #2d448d !important;
-        border: 2px solid #a6ce39;
-        border-radius: 6px;
-        padding: 8px 12px !important;
-        margin-bottom: 12px;
-        background: #f8fafd;
-        font-size: 1.1em;
-    }
-    /* For the latest Streamlit, also try targeting h1, h2, h3 inside the sidebar */
-    section[data-testid="stSidebar"] h1, 
-    section[data-testid="stSidebar"] h2, 
-    section[data-testid="stSidebar"] h3 {
-        text-transform: uppercase;
-        font-weight: bold;
-        color: #2d448d !important;
-        border: 2px solid #a6ce39;
-        border-radius: 6px;
-        padding: 8px 12px !important;
-        margin-bottom: 12px;
-        background: #f8fafd;
-        font-size: 1.1em;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
 # Remove Streamlit's default navigation/sidebar, if any, by not using multipage or page_link features.
 # Use only the custom sidebar.
 st.set_page_config(page_title="Salasar Digital Marketing Dashboard", layout="wide")
