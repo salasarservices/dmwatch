@@ -1,8 +1,8 @@
 import streamlit as st
-from components.sidebar import get_sidebar_selection
+from components.sidebar import sidebar_menu
 
 # Get sidebar selections
-menu, social_media_option, flush_clicked = get_sidebar_selection()
+main_menu, social_sub_menu, flush_clicked = sidebar_menu()
 
 st.set_page_config(page_title="Salasar Digital Marketing Dashboard", layout="wide")
 
@@ -12,25 +12,27 @@ st.markdown(
 )
 
 if flush_clicked:
-    st.success("MongoDB cache cleared!")  # Add cache clear logic if needed
+    # Add your cache clearing logic here if needed
+    st.success("MongoDB cache cleared!")
 
 # --- MAIN DASHBOARD LOGIC ---
-if menu == "WEBSITE ANALYTICS":
+if main_menu == "WEBSITE ANALYTICS":
+    # Import and run website analytics dashboard (single page for all sections)
     import pages.dashboard
-    # The dashboard page will render itself
 
-elif menu == "LEADS DASHBOARD":
+elif main_menu == "LEADS DASHBOARD":
+    # Import and run leads dashboard (shows both dashboard and data)
     import pages.leads_dashboard
-    # The leads dashboard page will render itself
 
-elif menu == "SOCIAL MEDIA ANALYTICS" and social_media_option:
-    if social_media_option == "Linkedin Analytics":
+elif main_menu == "SOCIAL MEDIA ANALYTICS":
+    # Show the selected social media analytics page
+    if social_sub_menu == "Linkedin Analytics":
         import pages.social_media_linkedin
-    elif social_media_option == "Facebook Page Analytics":
+    elif social_sub_menu == "Facebook Page Analytics":
         import pages.social_media_facebook
-    elif social_media_option == "Instagram Analytics":
+    elif social_sub_menu == "Instagram Analytics":
         import pages.social_media_instagram
-    elif social_media_option == "YouTube Channel Overview":
+    elif social_sub_menu == "YouTube Channel Overview":
         import pages.social_media_youtube
 
 else:
