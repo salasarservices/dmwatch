@@ -1,4 +1,22 @@
 import streamlit as st
+# Inject custom CSS
+st.markdown("""
+    <style>
+    /* Example: Make all sidebar headings bold, uppercase, blue, with a green border */
+    section[data-testid="stSidebar"] h1, 
+    section[data-testid="stSidebar"] h2, 
+    section[data-testid="stSidebar"] h3 {
+        text-transform: uppercase;
+        font-weight: bold;
+        color: #2d448d !important;
+        border: 2px solid #a6ce39;
+        border-radius: 6px;
+        padding: 8px 12px !important;
+        margin-bottom: 12px;
+        background: #f8fafd;
+    }
+    </style>
+""", unsafe_allow_html=True)
 from components.sidebar import sidebar_menu
 
 # Remove Streamlit's default navigation/sidebar, if any, by not using multipage or page_link features.
