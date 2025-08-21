@@ -2,18 +2,25 @@ import streamlit as st
 # Inject custom CSS
 st.markdown("""
     <style>
-    /* Example: Make all sidebar headings bold, uppercase, blue, with a green border */
-    section[data-testid="stSidebar"] h1, 
-    section[data-testid="stSidebar"] h2, 
-    section[data-testid="stSidebar"] h3 {
+    /* Style the default sidebar navigation links */
+    /* These selectors target the navigation links in the sidebar */
+    section[data-testid="stSidebar"] nav ul li a {
         text-transform: uppercase;
         font-weight: bold;
         color: #2d448d !important;
         border: 2px solid #a6ce39;
         border-radius: 6px;
         padding: 8px 12px !important;
-        margin-bottom: 12px;
+        margin-bottom: 10px;
+        display: block;
         background: #f8fafd;
+        transition: background 0.2s, color 0.2s;
+        font-size: 1.05em;
+    }
+    /* Optional: highlight the active (selected) nav link */
+    section[data-testid="stSidebar"] nav ul li[data-testid="stSidebarNavLinkActive"] a {
+        background: #a6ce39 !important;
+        color: #fff !important;
     }
     </style>
 """, unsafe_allow_html=True)
